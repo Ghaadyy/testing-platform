@@ -15,9 +15,11 @@ import Editor from "@monaco-editor/react";
 
 import { useContext, useState } from "react";
 import { MainContext } from "@/context/MainContext";
+import { useTheme } from "@/shadcn-components/theme-provider";
 
 function Dashboard() {
   const { code, setCode } = useContext(MainContext);
+  const { theme } = useTheme();
 
   const [urlSrc, setUrlSrc] = useState<string>(
     "https://www.selenium.dev/documentation"
@@ -31,7 +33,7 @@ function Dashboard() {
       <ResizablePanel>
         <Editor
           height="100%"
-          theme="vs-dark"
+          theme={theme == "light" ? "vs-light" : "vs-dark"}
           value={code}
           onChange={(c) => setCode(c ?? "")}
         />
@@ -41,7 +43,6 @@ function Dashboard() {
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel
             style={{
-              backgroundColor: "black",
               display: "flex",
               flexDirection: "column",
               gap: 10,
@@ -65,7 +66,6 @@ function Dashboard() {
           <ResizablePanel
             defaultSize={40}
             style={{
-              backgroundColor: "black",
               padding: 10,
             }}
           >
