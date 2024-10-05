@@ -5,60 +5,61 @@ namespace RestrictedNL.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TestsController(ITestFileRepository repository) : ControllerBase
+public class TestsController(ITestFileRepository testFileRepository) : ControllerBase
 {
-    private ITestFileRepository _repo = repository;
+    private ITestFileRepository _testFileRepo = testFileRepository;
 
     [HttpGet("{fileName}")]
     public ActionResult<TestFile> GetTestFile(string fileName)
     {
-        // Get the file and return the content
-        var file = _repo.GetTestFile(fileName);
+        var file = _testFileRepo.GetTestFile(fileName);
         if (file is null) return NotFound();
         return Ok(file);
     }
 
-    [HttpPost("{fileName}")]
-    public IActionResult PostTestFile(string fileName, [FromQuery] string content)
+    [HttpPost]
+    public IActionResult PostTestFile([FromBody] TestFileDTO fileDTO)
     {
-        var file = _repo.GetTestFile(fileName);
+        var file = _testFileRepo.GetTestFile(fileDTO.FileName);
         if (file is null)
         {
-            _repo.UploadTestFile(fileName, content);
+            _testFileRepo.UploadTestFile(fileDTO.FileName, fileDTO.Content);
             return NoContent();
         }
 
         return BadRequest("File with this name already exists");
     }
 
-    [HttpPut("{fileName}")]
-    public IActionResult UpdateTestFile(string fileName, [FromQuery] string content)
+    [HttpPut]
+    public IActionResult UpdateTestFile([FromBody] TestFileDTO fileDTO)
     {
-        var file = _repo.GetTestFile(fileName);
+        var file = _testFileRepo.GetTestFile(fileDTO.FileName);
 
         if (file is null) return BadRequest("File with this name does not exist");
 
-        _repo.UpdateTestFile(file, content);
+        _testFileRepo.UpdateTestFile(file, fileDTO.Content);
         return NoContent();
     }
 
-    [HttpPost("{fileName}/run")]
-    public IActionResult RunTestSuite(string fileName)
-    {
-        // get the test suite / file
-        // compile -> selenium
-        // run the selenium code...
-        // handle realtime updates
-        // return Ok()
+    //TODO
 
-        return Ok();
-    }
+    // [HttpPost("{fileName}/run")]
+    // public IActionResult RunTestSuite(string fileName)
+    // {
+    //     // get the test suite / file
+    //     // compile -> selenium
+    //     // run the selenium code...
+    //     // handle realtime updates
+    //     // return Ok()
 
-    [HttpGet("{fileName}/tests")]
-    public ActionResult<List<Test>> GetTests(string fileName)
-    {
-        List<Test> tests = [];
+    //     return Ok();
+    // }
 
-        return Ok(tests);
-    }
+    // [HttpGet("{fileName}/tests")]
+    // public ActionResult<List<Test>> GetTests(string fileName)
+    // {
+    //     List<Test> tests = [];
+
+    //     return Ok(tests);
+    // }
 }

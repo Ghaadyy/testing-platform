@@ -26,6 +26,7 @@ public class TestFileRepository(TestContext context) : ITestFileRepository
 
     public async Task UpdateTestFile(TestFile file, string content)
     {
+        _ctx.TestFiles.Attach(file);
         file.Content = content;
         file.UpdatedAt = DateTime.Now.ToString();
         await _ctx.SaveChangesAsync();
