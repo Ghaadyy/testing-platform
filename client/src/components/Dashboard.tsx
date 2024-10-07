@@ -2,20 +2,20 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/shadcn-components/ui/resizable";
-import { ScrollArea } from "@/shadcn-components/ui/scroll-area";
+} from "@/shadcn/components/ui/resizable";
+import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/shadcn-components/ui/alert";
-import { Input } from "@/shadcn-components/ui/input";
+} from "@/shadcn/components/ui/alert";
+import { Input } from "@/shadcn/components/ui/input";
 
 import Editor from "@monaco-editor/react";
 
 import { useContext, useState } from "react";
 import { MainContext } from "@/context/MainContext";
-import { useTheme } from "@/shadcn-components/theme-provider";
+import { useTheme } from "@/shadcn/components/theme-provider";
 
 function Dashboard() {
   const { code, setCode } = useContext(MainContext);

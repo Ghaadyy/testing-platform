@@ -2,7 +2,7 @@ import {
   Menubar,
   MenubarMenu,
   MenubarTrigger,
-} from "@/shadcn-components/ui/menubar";
+} from "@/shadcn/components/ui/menubar";
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,10 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
-} from "@/shadcn-components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/shadcn-components/ui/input";
-import { Button } from "@/shadcn-components/ui/button";
+} from "@/shadcn/components/ui/dialog";
+import { useToast } from "@/shadcn/hooks/use-toast";
+import { Input } from "@/shadcn/components/ui/input";
+import { Button } from "@/shadcn/components/ui/button";
 import { useContext, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 

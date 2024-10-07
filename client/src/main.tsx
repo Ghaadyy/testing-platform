@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ThemeProvider } from "@/shadcn-components/theme-provider.tsx";
+import { ThemeProvider } from "@/shadcn/components/theme-provider.tsx";
 import App from "./App.tsx";
 import "./index.css";
 
