@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RestrictedNL.Models;
+using RestrictedNL.Compiler;
 
 namespace RestrictedNL.Controllers;
 
@@ -41,19 +42,28 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
         return NoContent();
     }
 
+    [HttpGet("{fileName}/run")]
+    public IActionResult parse(string fileName)
+    {
+        //The parser must return success or error message
+
+        // get the test suite / file
+        // compile -> selenium
+        // run the selenium code...
+        // handle realtime updates
+
+        var file = _testFileRepo.GetTestFile(fileName);
+
+        if (file is null) return NotFound("File not found");
+
+        var status = Parser.parse(file.Content);
+
+        if (!status) return BadRequest("Could not compile");
+
+        return Ok("Compiled succesfully");
+    }
+
     //TODO
-
-    // [HttpPost("{fileName}/run")]
-    // public IActionResult RunTestSuite(string fileName)
-    // {
-    //     // get the test suite / file
-    //     // compile -> selenium
-    //     // run the selenium code...
-    //     // handle realtime updates
-    //     // return Ok()
-
-    //     return Ok();
-    // }
 
     // [HttpGet("{fileName}/tests")]
     // public ActionResult<List<Test>> GetTests(string fileName)
@@ -62,4 +72,10 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
 
     //     return Ok(tests);
     // }
+
+
+    // 1. translate compiled code into selenium
+    // 2. run selenium and show tests results
+    // 3. Error handling 
+    // 4. (Step Z) Syntax highlighting
 }
