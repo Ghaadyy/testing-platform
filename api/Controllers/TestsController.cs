@@ -42,7 +42,7 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
         return NoContent();
     }
 
-    [HttpGet("{fileName}/run")]
+    [HttpPost("{fileName}/run")]
     public IActionResult parse(string fileName)
     {
         //The parser must return success or error message
@@ -58,7 +58,12 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
 
         var status = Parser.parse(file.Content);
 
-        if (!status) return BadRequest("Could not compile");
+        if (!status) return BadRequest("Could not compile test file.");
+
+        // get the selenium code
+        // run the selenium code and update the user at each step
+        // Save the test results in the db
+        // filename | date | test-results
 
         return Ok("Compiled succesfully");
     }

@@ -78,6 +78,16 @@ function Menu() {
     });
   }
 
+  async function runTest() {
+    const res = await fetch(`http://localhost:5064/api/tests/${fileName}/run`, {
+      method: "POST",
+    });
+
+    toast({
+      title: await res.text(),
+    });
+  }
+
   return (
     <Menubar>
       <MenubarMenu>
@@ -187,7 +197,9 @@ function Menu() {
           </Dialog>
         )}
         <MenubarMenu>
-          <MenubarTrigger>Run</MenubarTrigger>
+          <MenubarTrigger onClick={runTest} disabled={!fileName}>
+            Run
+          </MenubarTrigger>
         </MenubarMenu>
       </MenubarMenu>
     </Menubar>
