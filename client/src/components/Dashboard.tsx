@@ -13,13 +13,23 @@ import { Input } from "@/shadcn/components/ui/input";
 
 import Editor from "@monaco-editor/react";
 
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import { useTheme } from "@/shadcn/components/theme-provider";
+import useWebSocket from "react-use-websocket";
 
 function Dashboard() {
   const { code, setCode } = useContext(MainContext);
   const { theme } = useTheme();
+  const { lastMessage } = useWebSocket("ws://localhost:5064/ws/user");
+  const [tests, setTests] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (lastMessage !== null) {
+      const test = JSON.parse(lastMessage.data);
+      setTests((prevTests) => [...prevTests, test]);
+    }
+  }, [lastMessage]);
 
   const [urlSrc, setUrlSrc] = useState<string>(
     "https://www.selenium.dev/documentation"
@@ -82,13 +92,18 @@ function Dashboard() {
                   gap: 10,
                 }}
               >
-                <Alert>
-                  <AlertTitle>discordSignIn</AlertTitle>
-                  <AlertDescription>
-                    You can add components and dependencies to your app using
-                    the cli.
-                  </AlertDescription>
-                </Alert>
+                {tests.map(({ testName, passed }) => (
+                  <Alert>
+                    <AlertTitle>{testName}</AlertTitle>
+                    <AlertDescription>
+                      {
+                        passed
+                          ? "Test Passed"
+                          : "Test Failed" /*1. nratib code; 2. selenium yehke ma3 user m3ayan; 3. run from the UI; 4. Adjust dic; 5. save to db*/
+                      }
+                    </AlertDescription>
+                  </Alert>
+                ))}
               </div>
             </ScrollArea>
           </ResizablePanel>

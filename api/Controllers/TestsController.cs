@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RestrictedNL.Models;
 using RestrictedNL.Compiler;
+using System.Diagnostics;
 
 namespace RestrictedNL.Controllers;
 
@@ -43,7 +44,7 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
     }
 
     [HttpPost("{fileName}/run")]
-    public IActionResult parse(string fileName)
+    public async Task<IActionResult> parse(string fileName)
     {
         //The parser must return success or error message
 
@@ -56,16 +57,38 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
 
         if (file is null) return NotFound("File not found");
 
-        var status = Parser.parse(file.Content);
+        var status = Parser.parse(file.Content, out string seleniumCode);
 
         if (!status) return BadRequest("Could not compile test file.");
+
+        string tempFilePath = Path.GetTempFileName() + ".mjs";
+
+        System.IO.File.WriteAllText(tempFilePath, seleniumCode);
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows() ? "mocha.cmd" : "mocha", // use .cmd for Windows
+            Arguments = $"{tempFilePath}",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = false,
+        };
+
+        using var process = Process.Start(startInfo);
+
+        if (process is null) return StatusCode(500, "Could not run test file.");
+
+        await process.WaitForExitAsync();
+
+        System.IO.File.Delete(tempFilePath);
 
         // get the selenium code
         // run the selenium code and update the user at each step
         // Save the test results in the db
         // filename | date | test-results
 
-        return Ok("Compiled succesfully");
+        return Ok("Tests ran succesfully");
     }
 
     //TODO
