@@ -69,10 +69,8 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
         {
             FileName = OperatingSystem.IsWindows() ? "mocha.cmd" : "mocha", // use .cmd for Windows
             Arguments = $"{tempFilePath}",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
             UseShellExecute = false,
-            CreateNoWindow = false,
+            CreateNoWindow = true,
         };
 
         using var process = Process.Start(startInfo);
