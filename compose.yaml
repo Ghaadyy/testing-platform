@@ -1,0 +1,27 @@
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "5064:5064"
+    environment:
+      ConnectionStrings__DB: "Host=db;Port=5432;Database=restrictednl-db;Username=postgres;Password=postgres;"
+
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: restrictednl-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
