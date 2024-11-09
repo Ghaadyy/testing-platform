@@ -7,19 +7,14 @@ namespace RestrictedNL.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TestsController(
-    ITestFileRepository testFileRepository,
-    ICompiledTestRepository compiledTestRepository,
-    ITestRunRepository testRunRepository) : ControllerBase
+public class TestsController(ITestsRepository testsRepository) : ControllerBase
 {
-    private ITestFileRepository _testFileRepo = testFileRepository;
-    private ICompiledTestRepository _compiledTestRepository = compiledTestRepository;
-    private ITestRunRepository _testRunRepository = testRunRepository;
+    private readonly ITestsRepository _testsRepository = testsRepository;
 
     [HttpGet("{fileName}")]
     public ActionResult<TestFile> GetTestFile(string fileName)
     {
-        var file = _testFileRepo.GetTestFile(fileName);
+        var file = _testsRepository.GetTestFile(fileName);
         if (file is null) return NotFound();
         return Ok(file);
     }
@@ -27,10 +22,10 @@ public class TestsController(
     [HttpPost]
     public IActionResult PostTestFile([FromBody] TestFileDTO fileDTO)
     {
-        var file = _testFileRepo.GetTestFile(fileDTO.FileName);
+        var file = _testsRepository.GetTestFile(fileDTO.FileName);
         if (file is null)
         {
-            _testFileRepo.UploadTestFile(fileDTO.FileName, fileDTO.Content);
+            _testsRepository.UploadTestFile(fileDTO.FileName, fileDTO.Content);
             return NoContent();
         }
 
@@ -40,18 +35,18 @@ public class TestsController(
     [HttpPut]
     public IActionResult UpdateTestFile([FromBody] TestFileDTO fileDTO)
     {
-        var file = _testFileRepo.GetTestFile(fileDTO.FileName);
+        var file = _testsRepository.GetTestFile(fileDTO.FileName);
 
         if (file is null) return BadRequest("File with this name does not exist");
 
-        _testFileRepo.UpdateTestFile(file, fileDTO.Content);
+        _testsRepository.UpdateTestFile(file, fileDTO.Content);
         return NoContent();
     }
 
     [HttpPost("{fileName}/run")]
     public async Task<IActionResult> Parse(string fileName)
     {
-        var file = _testFileRepo.GetTestFile(fileName);
+        var file = _testsRepository.GetTestFile(fileName);
 
         if (file is null) return NotFound("File not found");
 
@@ -59,7 +54,7 @@ public class TestsController(
 
         if (!status) return BadRequest("Could not compile test file.");
 
-        await _compiledTestRepository.UploadCompiledTest(fileName, seleniumCode);
+        await _testsRepository.UploadCompiledTest(fileName, seleniumCode);
 
         string tempFilePath = Path.GetTempFileName() + ".js";
 
@@ -85,7 +80,7 @@ public class TestsController(
 
         System.IO.File.Delete(tempFilePath);
 
-        await _testRunRepository.UploadTestRun(new TestRun
+        await _testsRepository.UploadTestRun(new TestRun
         {
             Name = fileName,
             Passed = true,
@@ -100,7 +95,7 @@ public class TestsController(
     [HttpGet("{fileName}/runs")]
     public ActionResult<List<TestRun>> GetTestsRuns(string fileName)
     {
-        var testRuns = _testRunRepository.GetTestRuns(fileName);
+        var testRuns = _testsRepository.GetTestRuns(fileName);
 
         if (testRuns is null) return NotFound("Tests runs not found");
 
@@ -110,7 +105,7 @@ public class TestsController(
     [HttpPost("{runId}/compiled/run")]
     public async Task<IActionResult> RunCompiled(int runId)
     {
-        var testRun = _testRunRepository.GetTestRun(runId);
+        var testRun = _testsRepository.GetTestRun(runId);
 
         if (testRun is null) return NotFound("File not found");
 
@@ -140,7 +135,7 @@ public class TestsController(
 
         System.IO.File.Delete(tempFilePath);
 
-        await _testRunRepository.UploadTestRun(new TestRun
+        await _testsRepository.UploadTestRun(new TestRun
         {
             Name = testRun.Name,
             Passed = true,

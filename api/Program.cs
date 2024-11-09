@@ -13,9 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
-builder.Services.AddScoped<ITestFileRepository, TestFileRepository>();
-builder.Services.AddScoped<ICompiledTestRepository, CompiledTestRepository>();
-builder.Services.AddScoped<ITestRunRepository, TestRunRepository>();
+builder.Services.AddScoped<ITestsRepository, TestsRepository>();
 builder.Services.AddSingleton<SocketsRepository>();
 builder.Services.AddDbContext<TestContext>(options =>
 {
