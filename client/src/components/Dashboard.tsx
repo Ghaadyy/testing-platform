@@ -4,12 +4,6 @@ import {
   ResizablePanelGroup,
 } from "@/shadcn/components/ui/resizable";
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/shadcn/components/ui/alert";
-import { Input } from "@/shadcn/components/ui/input";
 
 import Editor from "@monaco-editor/react";
 
@@ -17,12 +11,33 @@ import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import { useTheme } from "@/shadcn/components/theme-provider";
 import useWebSocket from "react-use-websocket";
+import { TestRun } from "@/models/TestRun";
+import TestRunTable from "./TestRunTable";
+import TestAlert from "./TestAlert";
 
 function Dashboard() {
-  const { code, setCode } = useContext(MainContext);
+  const { code, setCode, fileName } = useContext(MainContext);
   const { theme } = useTheme();
   const { lastMessage } = useWebSocket("ws://localhost:5064/ws/user");
   const [tests, setTests] = useState<any[]>([]);
+  const [testRuns, setTestRuns] = useState<TestRun[]>([]);
+
+  async function getTestRuns(fileName: string) {
+    try {
+      const res = await fetch(
+        `http://localhost:5064/api/tests/${fileName}/runs`
+      );
+      const testRuns: TestRun[] = await res.json();
+      console.log(testRuns);
+      setTestRuns(testRuns);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  useEffect(() => {
+    if (fileName) getTestRuns(fileName);
+  }, [fileName]);
 
   useEffect(() => {
     if (lastMessage !== null) {
@@ -31,14 +46,10 @@ function Dashboard() {
     }
   }, [lastMessage]);
 
-  const [urlSrc, setUrlSrc] = useState<string>(
-    "https://www.selenium.dev/documentation"
-  );
-
   return (
     <ResizablePanelGroup
       direction="horizontal"
-      style={{ height: "100%", width: "100%", borderRadius: 10 }}
+      className="h-full w-full rounded-lg"
     >
       <ResizablePanel>
         <Editor
@@ -51,58 +62,21 @@ function Dashboard() {
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={50}>
         <ResizablePanelGroup direction="vertical">
-          <ResizablePanel
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              padding: 10,
-            }}
-            defaultSize={60}
-          >
-            <Input
-              placeholder="Enter your website.."
-              onChange={(e) => setUrlSrc(e.target.value)}
-              value={urlSrc}
-            />
-            <iframe
-              width="100%"
-              height="100%"
-              style={{ borderRadius: 10 }}
-              src={urlSrc}
-            />
+          <ResizablePanel className="flex flex-col gap-3 p-3" defaultSize={60}>
+            <TestRunTable testRuns={testRuns} />
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel
-            defaultSize={40}
-            style={{
-              padding: 10,
-            }}
-          >
-            <ScrollArea
-              style={{
-                width: "100%",
-                height: "100%",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
-              >
+          <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
+            <h1 className="font-bold text-2xl">Tests</h1>
+            <ScrollArea className="h-full w-full">
+              <div className="flex flex-col gap-3">
+                {tests.length === 0 && (
+                  <p>
+                    There are no tests running yet. Try running a test first!
+                  </p>
+                )}
                 {tests.map(({ testName, passed }) => (
-                  <Alert>
-                    <AlertTitle>{testName}</AlertTitle>
-                    <AlertDescription>
-                      {
-                        passed
-                          ? "Test Passed"
-                          : "Test Failed" /*1. nratib code; 2. selenium yehke ma3 user m3ayan; 3. run from the UI; 4. Adjust dic; 5. save to db*/
-                      }
-                    </AlertDescription>
-                  </Alert>
+                  <TestAlert testName={testName} passed={passed} />
                 ))}
               </div>
             </ScrollArea>
