@@ -49,7 +49,7 @@ public static class Parser
         
         function afterEachTestHook() {
             sendAssert(socket, {
-                testName: this.currentTest.title,
+                message: this.currentTest.title,
                 passed: this.currentTest.state === 'passed',
             });
         }");

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RestrictedNL.Context;
 using RestrictedNL.Middlewares;
 using RestrictedNL.Models;
+using RestrictedNL.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,7 @@ builder.Services.AddCors();
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddScoped<ITestsRepository, TestsRepository>();
 builder.Services.AddSingleton<SocketsRepository>();
+builder.Services.AddScoped<TestExecutionService>();
 builder.Services.AddDbContext<TestContext>(options =>
 {
     options.UseNpgsql(builder.Configuration["ConnectionStrings:DB"]);

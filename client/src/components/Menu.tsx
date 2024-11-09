@@ -19,7 +19,11 @@ import { Button } from "@/shadcn/components/ui/button";
 import { useContext, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 
-function Menu() {
+type Props = {
+  runTest: () => void;
+};
+
+function Menu({ runTest }: Props) {
   const { toast } = useToast();
   const { fileName, setFileName, code, setCode } = useContext(MainContext);
 
@@ -75,16 +79,6 @@ function Menu() {
     setCode(code);
     toast({
       title: "Saved successfully!",
-    });
-  }
-
-  async function runTest() {
-    const res = await fetch(`http://localhost:5064/api/tests/${fileName}/run`, {
-      method: "POST",
-    });
-
-    toast({
-      title: await res.text(),
     });
   }
 

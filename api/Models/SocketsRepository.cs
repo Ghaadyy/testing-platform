@@ -3,7 +3,7 @@ using System.Net.WebSockets;
 
 namespace RestrictedNL.Models;
 
-class SocketsRepository
+public class SocketsRepository
 {
     private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
 

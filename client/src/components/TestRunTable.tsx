@@ -9,15 +9,9 @@ import {
   TableRow,
 } from "@/shadcn/components/ui/table";
 
-type Props = { testRuns: TestRun[] };
+type Props = { testRuns: TestRun[]; rerunHandler: (id: number) => void };
 
-async function rerunHandler(id: number) {
-  await fetch(`http://localhost:5064/api/tests/${id}/compiled/run`, {
-    method: "POST",
-  });
-}
-
-function TestRunTable({ testRuns }: Props) {
+function TestRunTable({ testRuns, rerunHandler }: Props) {
   return (
     <Table>
       <TableHeader>
