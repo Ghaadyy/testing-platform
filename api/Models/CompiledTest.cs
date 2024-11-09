@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RestrictedNL.Models;
 
-[Table("test_files")]
-public record TestFile
+[Table("compiled_tests")]
+public record CompiledTest
 {
     [Key]
     [Column("name")]

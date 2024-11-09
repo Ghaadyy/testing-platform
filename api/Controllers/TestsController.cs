@@ -7,9 +7,14 @@ namespace RestrictedNL.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TestsController(ITestFileRepository testFileRepository) : ControllerBase
+public class TestsController(
+    ITestFileRepository testFileRepository,
+    ICompiledTestRepository compiledTestRepository,
+    ITestRunRepository testRunRepository) : ControllerBase
 {
     private ITestFileRepository _testFileRepo = testFileRepository;
+    private ICompiledTestRepository _compiledTestRepository = compiledTestRepository;
+    private ITestRunRepository _testRunRepository = testRunRepository;
 
     [HttpGet("{fileName}")]
     public ActionResult<TestFile> GetTestFile(string fileName)
@@ -44,15 +49,8 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
     }
 
     [HttpPost("{fileName}/run")]
-    public async Task<IActionResult> parse(string fileName)
+    public async Task<IActionResult> Parse(string fileName)
     {
-        //The parser must return success or error message
-
-        // get the test suite / file
-        // compile -> selenium
-        // run the selenium code...
-        // handle realtime updates
-
         var file = _testFileRepo.GetTestFile(fileName);
 
         if (file is null) return NotFound("File not found");
@@ -61,9 +59,13 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
 
         if (!status) return BadRequest("Could not compile test file.");
 
-        string tempFilePath = Path.GetTempFileName() + ".mjs";
+        await _compiledTestRepository.UploadCompiledTest(fileName, seleniumCode);
 
-        System.IO.File.WriteAllText(tempFilePath, seleniumCode);
+        string tempFilePath = Path.GetTempFileName() + ".js";
+
+        System.IO.File.WriteAllText(tempFilePath, Parser.wrapWithSockets(seleniumCode));
+
+        Stopwatch stopwatch = new();
 
         var startInfo = new ProcessStartInfo
         {
@@ -73,35 +75,80 @@ public class TestsController(ITestFileRepository testFileRepository) : Controlle
             CreateNoWindow = true,
         };
 
+        stopwatch.Start();
         using var process = Process.Start(startInfo);
 
         if (process is null) return StatusCode(500, "Could not run test file.");
 
         await process.WaitForExitAsync();
+        stopwatch.Stop();
 
         System.IO.File.Delete(tempFilePath);
 
-        // get the selenium code
-        // run the selenium code and update the user at each step
-        // Save the test results in the db
-        // filename | date | test-results
+        await _testRunRepository.UploadTestRun(new TestRun
+        {
+            Name = fileName,
+            Passed = true,
+            RanAt = DateTime.Now.ToString(),
+            Duration = stopwatch.ElapsedMilliseconds,
+            CompiledCode = seleniumCode,
+        });
 
         return Ok("Tests ran succesfully");
     }
 
-    //TODO
+    [HttpGet("{fileName}/runs")]
+    public ActionResult<List<TestRun>> GetTestsRuns(string fileName)
+    {
+        var testRuns = _testRunRepository.GetTestRuns(fileName);
 
-    // [HttpGet("{fileName}/tests")]
-    // public ActionResult<List<Test>> GetTests(string fileName)
-    // {
-    //     List<Test> tests = [];
+        if (testRuns is null) return NotFound("Tests runs not found");
 
-    //     return Ok(tests);
-    // }
+        return Ok(testRuns);
+    }
 
+    [HttpPost("{runId}/compiled/run")]
+    public async Task<IActionResult> RunCompiled(int runId)
+    {
+        var testRun = _testRunRepository.GetTestRun(runId);
 
-    // 1. translate compiled code into selenium
-    // 2. run selenium and show tests results
-    // 3. Error handling 
-    // 4. (Step Z) Syntax highlighting
+        if (testRun is null) return NotFound("File not found");
+
+        string seleniumCode = testRun.CompiledCode;
+
+        string tempFilePath = Path.GetTempFileName() + ".js";
+
+        System.IO.File.WriteAllText(tempFilePath, Parser.wrapWithSockets(seleniumCode));
+
+        Stopwatch stopwatch = new();
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows() ? "mocha.cmd" : "mocha", // use .cmd for Windows
+            Arguments = $"{tempFilePath}",
+            UseShellExecute = false,
+            CreateNoWindow = false,
+        };
+
+        stopwatch.Start();
+        using var process = Process.Start(startInfo);
+
+        if (process is null) return StatusCode(500, "Could not run test file.");
+
+        await process.WaitForExitAsync();
+        stopwatch.Stop();
+
+        System.IO.File.Delete(tempFilePath);
+
+        await _testRunRepository.UploadTestRun(new TestRun
+        {
+            Name = testRun.Name,
+            Passed = true,
+            RanAt = DateTime.Now.ToString(),
+            Duration = stopwatch.ElapsedMilliseconds,
+            CompiledCode = seleniumCode,
+        });
+
+        return Ok("Tests ran succesfully");
+    }
 }
