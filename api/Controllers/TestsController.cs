@@ -6,10 +6,9 @@ namespace RestrictedNL.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TestsController(ITestsRepository testsRepository, SocketsRepository socketsRepository, TestExecutionService testExecutionService) : ControllerBase
+public class TestsController(ITestsRepository testsRepository, TestExecutionService testExecutionService) : ControllerBase
 {
     private readonly ITestsRepository _testsRepository = testsRepository;
-    private readonly SocketsRepository _socketsRepository = socketsRepository;
     private readonly TestExecutionService _testExecutionService = testExecutionService;
     private const string userId = "userId";
 
