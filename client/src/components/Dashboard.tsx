@@ -14,12 +14,20 @@ import { TestRun } from "@/models/TestRun";
 import TestRunTable from "./TestRunTable";
 import TestAlert from "./TestAlert";
 import { Check } from "@/models/Check";
+import TestCreator from "./TestCreator";
+import { Switch } from "@/shadcn/components/ui/switch";
+import { Label } from "@/shadcn/components/ui/label";
+import { generateCode } from "@/utils/generateCode";
+import { Test } from "@/models/Statement";
 
 type Props = { checks: Check[]; rerunHandler: (id: number) => void };
 
 function Dashboard({ checks, rerunHandler }: Props) {
   const { code, setCode, fileName } = useContext(MainContext);
+  const [tests, setTests] = useState<Test[]>([]);
   const { theme } = useTheme();
+  const [isCode, setIsCode] = useState<boolean>(false);
+
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
   async function getTestRuns(fileName: string) {
@@ -45,12 +53,27 @@ function Dashboard({ checks, rerunHandler }: Props) {
       className="h-full w-full rounded-lg"
     >
       <ResizablePanel>
-        <Editor
-          height="100%"
-          theme={theme == "light" ? "vs-light" : "vs-dark"}
-          value={code}
-          onChange={(c) => setCode(c ?? "")}
+        <Switch
+          id="code-toggle"
+          checked={isCode}
+          onCheckedChange={(checked) => {
+            if (checked) setCode(generateCode(tests));
+            setIsCode(checked);
+          }}
         />
+        <Label htmlFor="code-toggle">
+          {isCode ? "Use visual editor" : "Use code editor"}
+        </Label>
+        {isCode ? (
+          <Editor
+            height="100%"
+            theme={theme == "light" ? "vs-light" : "vs-dark"}
+            value={code}
+            onChange={(c) => setCode(c ?? "")}
+          />
+        ) : (
+          <TestCreator onChange={setTests} />
+        )}
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={50}>
