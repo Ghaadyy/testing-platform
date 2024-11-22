@@ -20,6 +20,7 @@ function TestRunTable({ testRuns, rerunHandler }: Props) {
           <TableHead>Duration</TableHead>
           <TableHead>Ran At</TableHead>
           <TableHead>Passed</TableHead>
+          <TableHead></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
