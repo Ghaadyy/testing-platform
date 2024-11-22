@@ -21,12 +21,12 @@ public class TestsController(ITestsRepository testsRepository, TestExecutionServ
     }
 
     [HttpPost]
-    public IActionResult PostTestFile([FromBody] TestFileDTO fileDTO)
+    public async Task<IActionResult> PostTestFile([FromBody] TestFileDTO fileDTO)
     {
         var file = _testsRepository.GetTestFile(fileDTO.FileName);
         if (file is null)
         {
-            _testsRepository.UploadTestFile(fileDTO.FileName, fileDTO.Content);
+            await _testsRepository.UploadTestFile(fileDTO.FileName, fileDTO.Content);
             return NoContent();
         }
 
@@ -34,13 +34,13 @@ public class TestsController(ITestsRepository testsRepository, TestExecutionServ
     }
 
     [HttpPut]
-    public IActionResult UpdateTestFile([FromBody] TestFileDTO fileDTO)
+    public async Task<IActionResult> UpdateTestFile([FromBody] TestFileDTO fileDTO)
     {
         var file = _testsRepository.GetTestFile(fileDTO.FileName);
 
         if (file is null) return BadRequest("File with this name does not exist");
 
-        _testsRepository.UpdateTestFile(file, fileDTO.Content);
+        await _testsRepository.UpdateTestFile(file, fileDTO.Content);
         return NoContent();
     }
 
