@@ -67,7 +67,7 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
         {
             Name = testName,
             Passed = true,
-            RanAt = DateTime.Now.ToString(),
+            RanAt = DateTime.UtcNow,
             Duration = Duration,
             CompiledCode = seleniumCode,
         });

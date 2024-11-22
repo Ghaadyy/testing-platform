@@ -18,7 +18,7 @@ public class TestsRepository(TestContext context) : ITestsRepository
     {
         context.TestFiles.Attach(file);
         file.Content = content;
-        file.UpdatedAt = DateTime.Now.ToString();
+        file.UpdatedAt = DateTime.UtcNow;
         await context.SaveChangesAsync();
     }
 
@@ -28,8 +28,8 @@ public class TestsRepository(TestContext context) : ITestsRepository
         {
             Name = fileName,
             Content = content,
-            CreatedAt = DateTime.Now.ToString(),
-            UpdatedAt = DateTime.Now.ToString()
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         });
 
         await context.SaveChangesAsync();

@@ -28,7 +28,7 @@ function TestRunTable({ testRuns, rerunHandler }: Props) {
           <TableRow key={id}>
             <TableCell className="font-medium">{name}</TableCell>
             <TableCell>{duration.toString()}ms</TableCell>
-            <TableCell>{ranAt}</TableCell>
+            <TableCell>{new Date(ranAt).toLocaleString()}</TableCell>
             <TableCell>{passed ? "Passed" : "Failed"}</TableCell>
             <TableCell>
               <Button onClick={() => rerunHandler(id)}>Rerun</Button>
