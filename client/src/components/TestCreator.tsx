@@ -24,7 +24,7 @@ function TestCreator({ onChange }: { onChange: (tests: Test[]) => void }) {
     <div className="p-5">
       <div className="flex flex-col gap-3">
         {tests.map((test, id) => (
-          <div className="rounded-md bg-gray-950 border-white border-2 border-solid p-3">
+          <div className="rounded-md bg-transparent border-input border-2 border-solid p-3">
             <h1 className="font-bold">{test.name}</h1>
             <StatementCreator
               defaultStatements={test.statements}

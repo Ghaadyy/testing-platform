@@ -66,3 +66,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+.editor-wrapper .monaco-editor,
+.editor-wrapper .overflow-guard {
+  border-radius: 5px;
+}

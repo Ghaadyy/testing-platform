@@ -52,21 +52,30 @@ function Dashboard({ checks, rerunHandler }: Props) {
       direction="horizontal"
       className="h-full w-full rounded-lg"
     >
-      <ResizablePanel>
-        <Switch
-          id="code-toggle"
-          checked={isCode}
-          onCheckedChange={(checked) => {
-            if (checked) setCode(generateCode(tests));
-            setIsCode(checked);
-          }}
-        />
-        <Label htmlFor="code-toggle">
-          {isCode ? "Use visual editor" : "Use code editor"}
-        </Label>
+      <ResizablePanel className="flex flex-col gap-3 px-3">
+        <div className="flex flex-row gap-3 items-center">
+          <Switch
+            id="code-toggle"
+            checked={isCode}
+            onCheckedChange={(checked) => {
+              if (checked) setCode(generateCode(tests));
+              setIsCode(checked);
+            }}
+          />
+          <Label htmlFor="code-toggle">
+            {isCode ? "Use visual editor" : "Use code editor"}
+          </Label>
+        </div>
         {isCode ? (
           <Editor
             height="100%"
+            options={{
+              minimap: {
+                enabled: false,
+              },
+              fontSize: 14,
+            }}
+            className="editor-wrapper"
             theme={theme == "light" ? "vs-light" : "vs-dark"}
             value={code}
             onChange={(c) => setCode(c ?? "")}
