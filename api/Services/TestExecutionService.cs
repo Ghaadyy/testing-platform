@@ -81,6 +81,24 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
     private static async Task<(bool Success, long Duration)> RunTestProcessAsync(string tempFilePath)
     {
         Stopwatch stopwatch = new();
+
+        // install npm dependencies
+        var npmInstallInfo = new ProcessStartInfo {
+            FileName = "npm",
+            Arguments = "install websocket selenium-webdriver",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = Path.GetDirectoryName(tempFilePath),
+        };
+        
+        using var npmProc = Process.Start(npmInstallInfo);
+        if (npmProc is null)
+        {
+            File.Delete(tempFilePath);
+            return (false, 0);
+        }
+        await npmProc.WaitForExitAsync();
+
         var startInfo = new ProcessStartInfo
         {
             FileName = OperatingSystem.IsWindows() ? "mocha.cmd" : "mocha",
