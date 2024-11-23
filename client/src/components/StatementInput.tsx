@@ -177,8 +177,8 @@ function StatementInput({
             <SelectValue placeholder="State" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="displayed">displayed</SelectItem>
-            <SelectItem value="hidden">hidden</SelectItem>
+            <SelectItem value="is displayed">is displayed</SelectItem>
+            <SelectItem value="is hidden">is hidden</SelectItem>
           </SelectContent>
         </Select>
       )}

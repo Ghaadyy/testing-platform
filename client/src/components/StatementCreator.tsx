@@ -29,6 +29,7 @@ function StatementCreator({
         to = updated[toIdx];
       updated[fromIdx] = to;
       updated[toIdx] = from;
+      if (onChange !== undefined) onChange(updated);
       return updated;
     });
   }

@@ -8,7 +8,6 @@ import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 import Editor from "@monaco-editor/react";
 import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
-import { useTheme } from "@/shadcn/components/theme-provider";
 import { TestRun } from "@/models/TestRun";
 import TestRunTable from "./TestRunTable";
 import TestAlert from "./TestAlert";
@@ -19,6 +18,7 @@ import { Label } from "@/shadcn/components/ui/label";
 import { generateCode } from "@/utils/generateCode";
 import { Test } from "@/models/Statement";
 import { setupEditor } from "@/utils/setupEditor";
+import { parseCode } from "@/utils/parseCode";
 
 type Props = { checks: Check[]; rerunHandler: (id: number) => void };
 
@@ -58,6 +58,7 @@ function Dashboard({ checks, rerunHandler }: Props) {
             checked={isCode}
             onCheckedChange={(checked) => {
               if (checked) setCode(generateCode(tests));
+              else setTests(parseCode(code));
               setIsCode(checked);
             }}
           />
@@ -82,7 +83,7 @@ function Dashboard({ checks, rerunHandler }: Props) {
             beforeMount={setupEditor}
           />
         ) : (
-          <TestCreator onChange={setTests} />
+          <TestCreator defaultTests={tests} onChange={setTests} />
         )}
       </ResizablePanel>
       <ResizableHandle withHandle />

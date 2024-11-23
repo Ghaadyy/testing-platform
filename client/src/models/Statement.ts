@@ -39,4 +39,4 @@ export type Statement =
   | TypeStatement;
 
 export type ElementType = "button" | "link" | "text" | "image" | "input";
-export type ElementState = "displayed" | "hidden";
+export type ElementState = "is displayed" | "is hidden";

@@ -15,8 +15,14 @@ import {
 import { Input } from "@/shadcn/components/ui/input";
 import { useToast } from "@/shadcn/hooks/use-toast";
 
-function TestCreator({ onChange }: { onChange: (tests: Test[]) => void }) {
-  const [tests, setTests] = useState<Test[]>([]);
+function TestCreator({
+  defaultTests,
+  onChange,
+}: {
+  onChange: (tests: Test[]) => void;
+  defaultTests: Test[];
+}) {
+  const [tests, setTests] = useState<Test[]>(defaultTests);
   const [testName, setTestName] = useState<string>("");
   const { toast } = useToast();
 
