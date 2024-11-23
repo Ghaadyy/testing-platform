@@ -4,17 +4,20 @@ export type Test = {
 };
 
 export type VisitStatement = {
+  id: number;
   action: "visit";
   url: string;
 };
 
 export type ClickStatement = {
+  id: number;
   action: "click";
   elementType: ElementType;
   description: string;
 };
 
 export type CheckStatement = {
+  id: number;
   action: "check";
   elementType: ElementType;
   description: string;
@@ -22,6 +25,7 @@ export type CheckStatement = {
 };
 
 export type TypeStatement = {
+  id: number;
   action: "type";
   content: string;
   elementType: ElementType;

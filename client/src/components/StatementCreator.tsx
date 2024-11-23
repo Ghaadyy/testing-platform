@@ -3,6 +3,8 @@ import ActionInput from "./StatementInput";
 import { useState } from "react";
 import type { Statement } from "@/models/Statement";
 
+let idx = 1; // global idx for statements
+
 function AddActionButton({ onClick }: ButtonProps) {
   return <Button onClick={onClick}>+</Button>;
 }
@@ -18,11 +20,25 @@ function StatementCreator({
 }: StatementCreatorProps) {
   const [statements, setStatements] = useState<Statement[]>(defaultStatements);
 
+  function onMove(fromId: number, toId: number) {
+    setStatements((prevStatements) => {
+      const updated = [...prevStatements];
+      const fromIdx = updated.findIndex(({ id }) => id === fromId);
+      const toIdx = updated.findIndex(({ id }) => id === toId);
+      const from = updated[fromIdx],
+        to = updated[toIdx];
+      updated[fromIdx] = to;
+      updated[toIdx] = from;
+      return updated;
+    });
+  }
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-3">
       {statements.map((statement, id) => (
         <ActionInput
-          key={id}
+          key={statement.id}
+          id={id}
           defaultStatement={statement}
           onChange={(newStatement) => {
             setStatements((prev) => {
@@ -32,15 +48,17 @@ function StatementCreator({
               return updatedStatements;
             });
           }}
+          onMove={onMove}
         />
       ))}
-      <div className="self-end mr-5">
+      <div className="self-end">
         <AddActionButton
           onClick={() =>
             setStatements((prevStatements) => {
               const updated: Statement[] = [
                 ...prevStatements,
                 {
+                  id: idx++,
                   action: "visit",
                   url: "",
                 },

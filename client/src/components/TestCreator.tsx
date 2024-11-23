@@ -21,10 +21,10 @@ function TestCreator({ onChange }: { onChange: (tests: Test[]) => void }) {
   const { toast } = useToast();
 
   return (
-    <div className="p-5">
+    <div className="py-5 overflow-y-scroll">
       <div className="flex flex-col gap-3">
         {tests.map((test, id) => (
-          <div className="rounded-md bg-transparent border-input border-2 border-solid p-3">
+          <div className="rounded-md bg-transparent border-input border-2 border-solid p-3 flex flex-col gap-3">
             <h1 className="font-bold">{test.name}</h1>
             <StatementCreator
               defaultStatements={test.statements}
@@ -39,7 +39,7 @@ function TestCreator({ onChange }: { onChange: (tests: Test[]) => void }) {
             />
           </div>
         ))}
-        <div className="self-end mr-5 flex flex-row gap-3">
+        <div className="self-end flex flex-row gap-3">
           <Dialog>
             <DialogTrigger>
               <Button>Add test</Button>
@@ -85,7 +85,6 @@ function TestCreator({ onChange }: { onChange: (tests: Test[]) => void }) {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          {/* <Button>Add test</Button> */}
         </div>
       </div>
     </div>
@@ -93,18 +92,3 @@ function TestCreator({ onChange }: { onChange: (tests: Test[]) => void }) {
 }
 
 export default TestCreator;
-
-/*
-onClick={() =>
-              setTests((prevTests) => {
-                const updated = [
-                  ...prevTests,
-                  {
-                    name: "test",
-                    statements: [],
-                  },
-                ];
-                onChange(updated);
-                return updated;
-              })
-            }*/
