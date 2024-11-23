@@ -15,7 +15,7 @@ export function generateCode(tests: Test[]): string {
           code += `   click ${statement.elementType} with description ${statement.description}\n`;
           break;
         case "check":
-          code += `   check if ${statement.elementType} with description ${statement.action} ${statement.state}`;
+          code += `   check if ${statement.elementType} with description ${statement.action} ${statement.state}\n`;
           break;
         case "type":
           code += `   type ${statement.content} on ${statement.elementType} with description ${statement.description}\n`;
