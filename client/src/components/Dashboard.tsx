@@ -6,7 +6,6 @@ import {
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 
 import Editor from "@monaco-editor/react";
-
 import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import { useTheme } from "@/shadcn/components/theme-provider";
@@ -19,13 +18,13 @@ import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
 import { generateCode } from "@/utils/generateCode";
 import { Test } from "@/models/Statement";
+import { setupEditor } from "@/utils/setupEditor";
 
 type Props = { checks: Check[]; rerunHandler: (id: number) => void };
 
 function Dashboard({ checks, rerunHandler }: Props) {
   const { code, setCode, fileName } = useContext(MainContext);
   const [tests, setTests] = useState<Test[]>([]);
-  const { theme } = useTheme();
   const [isCode, setIsCode] = useState<boolean>(false);
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
@@ -75,10 +74,12 @@ function Dashboard({ checks, rerunHandler }: Props) {
               },
               fontSize: 14,
             }}
+            language={"rnl"}
             className="editor-wrapper"
-            theme={theme == "light" ? "vs-light" : "vs-dark"}
+            theme={"rnl-theme"}
             value={code}
             onChange={(c) => setCode(c ?? "")}
+            beforeMount={setupEditor}
           />
         ) : (
           <TestCreator onChange={setTests} />
