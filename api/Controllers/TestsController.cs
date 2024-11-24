@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using RestrictedNL.Models;
-using RestrictedNL.Compiler;
-using System.Diagnostics;
+using RestrictedNL.Services;
 
 namespace RestrictedNL.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TestsController(ITestsRepository testsRepository) : ControllerBase
+public class TestsController(ITestsRepository testsRepository, TestExecutionService testExecutionService) : ControllerBase
 {
     private readonly ITestsRepository _testsRepository = testsRepository;
+    private readonly TestExecutionService _testExecutionService = testExecutionService;
+    private const string userId = "userId";
 
     [HttpGet("{fileName}")]
     public ActionResult<TestFile> GetTestFile(string fileName)
@@ -20,12 +21,12 @@ public class TestsController(ITestsRepository testsRepository) : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult PostTestFile([FromBody] TestFileDTO fileDTO)
+    public async Task<IActionResult> PostTestFile([FromBody] TestFileDTO fileDTO)
     {
         var file = _testsRepository.GetTestFile(fileDTO.FileName);
         if (file is null)
         {
-            _testsRepository.UploadTestFile(fileDTO.FileName, fileDTO.Content);
+            await _testsRepository.UploadTestFile(fileDTO.FileName, fileDTO.Content);
             return NoContent();
         }
 
@@ -33,63 +34,27 @@ public class TestsController(ITestsRepository testsRepository) : ControllerBase
     }
 
     [HttpPut]
-    public IActionResult UpdateTestFile([FromBody] TestFileDTO fileDTO)
+    public async Task<IActionResult> UpdateTestFile([FromBody] TestFileDTO fileDTO)
     {
         var file = _testsRepository.GetTestFile(fileDTO.FileName);
 
         if (file is null) return BadRequest("File with this name does not exist");
 
-        _testsRepository.UpdateTestFile(file, fileDTO.Content);
+        await _testsRepository.UpdateTestFile(file, fileDTO.Content);
         return NoContent();
     }
 
-    [HttpPost("{fileName}/run")]
+    [HttpGet("{fileName}/run")]
     public async Task<IActionResult> Parse(string fileName)
     {
-        var file = _testsRepository.GetTestFile(fileName);
-
-        if (file is null) return NotFound("File not found");
-
-        var status = Parser.parse(file.Content, out string seleniumCode);
-
-        if (!status) return BadRequest("Could not compile test file.");
-
-        await _testsRepository.UploadCompiledTest(fileName, seleniumCode);
-
-        string tempFilePath = Path.GetTempFileName() + ".js";
-
-        System.IO.File.WriteAllText(tempFilePath, Parser.wrapWithSockets(seleniumCode));
-
-        Stopwatch stopwatch = new();
-
-        var startInfo = new ProcessStartInfo
+        if (HttpContext.WebSockets.IsWebSocketRequest)
         {
-            FileName = OperatingSystem.IsWindows() ? "mocha.cmd" : "mocha", // use .cmd for Windows
-            Arguments = $"{tempFilePath}",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
+            using var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-        stopwatch.Start();
-        using var process = Process.Start(startInfo);
+            return await _testExecutionService.RunTestAsync(socket, fileName, userId);
+        }
 
-        if (process is null) return StatusCode(500, "Could not run test file.");
-
-        await process.WaitForExitAsync();
-        stopwatch.Stop();
-
-        System.IO.File.Delete(tempFilePath);
-
-        await _testsRepository.UploadTestRun(new TestRun
-        {
-            Name = fileName,
-            Passed = true,
-            RanAt = DateTime.Now.ToString(),
-            Duration = stopwatch.ElapsedMilliseconds,
-            CompiledCode = seleniumCode,
-        });
-
-        return Ok("Tests ran succesfully");
+        return BadRequest("This should be a WebSocket connection");
     }
 
     [HttpGet("{fileName}/runs")]
@@ -102,48 +67,16 @@ public class TestsController(ITestsRepository testsRepository) : ControllerBase
         return Ok(testRuns);
     }
 
-    [HttpPost("{runId}/compiled/run")]
+    [HttpGet("{runId}/compiled/run")]
     public async Task<IActionResult> RunCompiled(int runId)
     {
-        var testRun = _testsRepository.GetTestRun(runId);
-
-        if (testRun is null) return NotFound("File not found");
-
-        string seleniumCode = testRun.CompiledCode;
-
-        string tempFilePath = Path.GetTempFileName() + ".js";
-
-        System.IO.File.WriteAllText(tempFilePath, Parser.wrapWithSockets(seleniumCode));
-
-        Stopwatch stopwatch = new();
-
-        var startInfo = new ProcessStartInfo
+        if (HttpContext.WebSockets.IsWebSocketRequest)
         {
-            FileName = OperatingSystem.IsWindows() ? "mocha.cmd" : "mocha", // use .cmd for Windows
-            Arguments = $"{tempFilePath}",
-            UseShellExecute = false,
-            CreateNoWindow = false,
-        };
+            using var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-        stopwatch.Start();
-        using var process = Process.Start(startInfo);
+            return await _testExecutionService.RunCompiledTestAsync(socket, userId, runId);
+        }
 
-        if (process is null) return StatusCode(500, "Could not run test file.");
-
-        await process.WaitForExitAsync();
-        stopwatch.Stop();
-
-        System.IO.File.Delete(tempFilePath);
-
-        await _testsRepository.UploadTestRun(new TestRun
-        {
-            Name = testRun.Name,
-            Passed = true,
-            RanAt = DateTime.Now.ToString(),
-            Duration = stopwatch.ElapsedMilliseconds,
-            CompiledCode = seleniumCode,
-        });
-
-        return Ok("Tests ran succesfully");
+        return BadRequest("This should be a WebSocket connection");
     }
 }

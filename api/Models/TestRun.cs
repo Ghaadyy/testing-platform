@@ -14,7 +14,7 @@ public record TestRun
     public required string Name { get; set; }
 
     [Column("ran_at")]
-    public required string RanAt { get; set; }
+    public required DateTime RanAt { get; set; }
 
     [Column("compiled_code")]
     public required string CompiledCode { get; set; }

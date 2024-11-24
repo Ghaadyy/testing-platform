@@ -14,8 +14,8 @@ public record TestFile
     public required string Content { get; set; }
 
     [Column("created_at")]
-    public required string CreatedAt { get; set; }
+    public required DateTime CreatedAt { get; set; }
 
     [Column("updated_at")]
-    public required string UpdatedAt { get; set; }
+    public required DateTime UpdatedAt { get; set; }
 }

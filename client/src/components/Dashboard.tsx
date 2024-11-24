@@ -6,20 +6,27 @@ import {
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 
 import Editor from "@monaco-editor/react";
-
 import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
-import { useTheme } from "@/shadcn/components/theme-provider";
-import useWebSocket from "react-use-websocket";
 import { TestRun } from "@/models/TestRun";
 import TestRunTable from "./TestRunTable";
 import TestAlert from "./TestAlert";
+import { Check } from "@/models/Check";
+import TestCreator from "./TestCreator";
+import { Switch } from "@/shadcn/components/ui/switch";
+import { Label } from "@/shadcn/components/ui/label";
+import { generateCode } from "@/utils/generateCode";
+import { Test } from "@/models/Statement";
+import { setupEditor } from "@/utils/setupEditor";
+import { parseCode } from "@/utils/parseCode";
 
-function Dashboard() {
+type Props = { checks: Check[]; rerunHandler: (id: number) => void };
+
+function Dashboard({ checks, rerunHandler }: Props) {
   const { code, setCode, fileName } = useContext(MainContext);
-  const { theme } = useTheme();
-  const { lastMessage } = useWebSocket("ws://localhost:5064/ws/user");
-  const [tests, setTests] = useState<any[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
+  const [isCode, setIsCode] = useState<boolean>(false);
+
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
   async function getTestRuns(fileName: string) {
@@ -39,45 +46,61 @@ function Dashboard() {
     if (fileName) getTestRuns(fileName);
   }, [fileName]);
 
-  useEffect(() => {
-    if (lastMessage !== null) {
-      const test = JSON.parse(lastMessage.data);
-      setTests((prevTests) => [...prevTests, test]);
-    }
-  }, [lastMessage]);
-
   return (
     <ResizablePanelGroup
       direction="horizontal"
       className="h-full w-full rounded-lg"
     >
-      <ResizablePanel>
-        <Editor
-          height="100%"
-          theme={theme == "light" ? "vs-light" : "vs-dark"}
-          value={code}
-          onChange={(c) => setCode(c ?? "")}
-        />
+      <ResizablePanel className="flex flex-col gap-3 px-3">
+        <div className="flex flex-row gap-3 items-center">
+          <Switch
+            id="code-toggle"
+            checked={isCode}
+            onCheckedChange={(checked) => {
+              if (checked) setCode(generateCode(tests));
+              else setTests(parseCode(code));
+              setIsCode(checked);
+            }}
+          />
+          <Label htmlFor="code-toggle">
+            {isCode ? "Use visual editor" : "Use code editor"}
+          </Label>
+        </div>
+        {isCode ? (
+          <Editor
+            height="100%"
+            options={{
+              minimap: {
+                enabled: false,
+              },
+              fontSize: 14,
+            }}
+            language={"rnl"}
+            className="editor-wrapper"
+            theme={"rnl-theme"}
+            value={code}
+            onChange={(c) => setCode(c ?? "")}
+            beforeMount={setupEditor}
+          />
+        ) : (
+          <TestCreator defaultTests={tests} onChange={setTests} />
+        )}
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={50}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel className="flex flex-col gap-3 p-3" defaultSize={60}>
-            <TestRunTable testRuns={testRuns} />
+            <TestRunTable testRuns={testRuns} rerunHandler={rerunHandler} />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
             <h1 className="font-bold text-2xl">Tests</h1>
             <ScrollArea className="h-full w-full">
+              {checks.length === 0 && (
+                <p>There are no tests running yet. Try running a test first!</p>
+              )}
               <div className="flex flex-col gap-3">
-                {tests.length === 0 && (
-                  <p>
-                    There are no tests running yet. Try running a test first!
-                  </p>
-                )}
-                {tests.map(({ testName, passed }) => (
-                  <TestAlert testName={testName} passed={passed} />
-                ))}
+                <TestAlert checks={checks} />
               </div>
             </ScrollArea>
           </ResizablePanel>

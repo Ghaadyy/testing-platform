@@ -8,6 +8,4 @@ public interface ITestsRepository
     TestRun? GetTestRun(int runId);
     List<TestRun> GetTestRuns(string fileName);
     Task UploadTestRun(TestRun testRun);
-    CompiledTest? GetCompiledTest(string testName);
-    Task UploadCompiledTest(string fileName, string content);
 }

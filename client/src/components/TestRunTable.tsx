@@ -9,15 +9,9 @@ import {
   TableRow,
 } from "@/shadcn/components/ui/table";
 
-type Props = { testRuns: TestRun[] };
+type Props = { testRuns: TestRun[]; rerunHandler: (id: number) => void };
 
-async function rerunHandler(id: number) {
-  await fetch(`http://localhost:5064/api/tests/${id}/compiled/run`, {
-    method: "POST",
-  });
-}
-
-function TestRunTable({ testRuns }: Props) {
+function TestRunTable({ testRuns, rerunHandler }: Props) {
   return (
     <Table>
       <TableHeader>
@@ -26,6 +20,7 @@ function TestRunTable({ testRuns }: Props) {
           <TableHead>Duration</TableHead>
           <TableHead>Ran At</TableHead>
           <TableHead>Passed</TableHead>
+          <TableHead></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -33,7 +28,7 @@ function TestRunTable({ testRuns }: Props) {
           <TableRow key={id}>
             <TableCell className="font-medium">{name}</TableCell>
             <TableCell>{duration.toString()}ms</TableCell>
-            <TableCell>{ranAt}</TableCell>
+            <TableCell>{new Date(ranAt).toLocaleString()}</TableCell>
             <TableCell>{passed ? "Passed" : "Failed"}</TableCell>
             <TableCell>
               <Button onClick={() => rerunHandler(id)}>Rerun</Button>
