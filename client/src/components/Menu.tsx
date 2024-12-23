@@ -27,6 +27,7 @@ import {
 } from "@/shadcn/components/ui/dropdown-menu";
 import { useTheme } from "@/shadcn/components/theme-provider";
 import { Moon, Sun } from "lucide-react";
+import { Link } from "react-router";
 
 type Props = {
   runTest: () => void;
@@ -36,34 +37,7 @@ function Menu({ runTest }: Props) {
   const { toast } = useToast();
   const { fileName, setFileName, code, setCode } = useContext(MainContext);
 
-  const [openFileName, setOpenFileName] = useState<string>("");
   const [saveFileName, setSaveFileName] = useState<string>("");
-
-  function resetPage() {
-    setFileName("");
-    setCode("");
-  }
-
-  async function openDocument(fileName: string) {
-    try {
-      const res = await fetch(`http://localhost:5064/api/tests/${fileName}`);
-      if (!res.ok) {
-        toast({
-          title: "Couldn't find file",
-        });
-        return;
-      }
-
-      const file = await res.json();
-      setFileName(file.name);
-      setCode(file.content);
-      toast({
-        title: "File opened successfully",
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  }
 
   async function saveDocument(code: string, savedFileName: string) {
     const res = await fetch("http://localhost:5064/api/tests", {
@@ -97,70 +71,11 @@ function Menu({ runTest }: Props) {
     <div className="flex flex-row gap-3">
       <Menubar className="flex-1">
         <MenubarMenu>
-          <Dialog>
-            <MenubarMenu>
-              <MenubarTrigger>
-                <DialogTrigger>New</DialogTrigger>
-              </MenubarTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>New Page</DialogTitle>
-                  <DialogDescription>
-                    Are you sure you want to discard the current page and create
-                    a new one? Any unsaved changes will be lost.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-start">
-                  <DialogClose>
-                    <Button
-                      type="button"
-                      variant="default"
-                      onClick={() => resetPage()}
-                    >
-                      New
-                    </Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </MenubarMenu>
-          </Dialog>
-          <Dialog>
-            <MenubarMenu>
-              <MenubarTrigger>
-                <DialogTrigger>Open</DialogTrigger>
-              </MenubarTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Open file</DialogTitle>
-                  <DialogDescription>
-                    Please enter the file name to open it.
-                  </DialogDescription>
-                </DialogHeader>
-                <div>
-                  <Input
-                    placeholder="File Name...."
-                    value={openFileName}
-                    onChange={(e) => setOpenFileName(e.target.value)}
-                  />
-                </div>
-                <DialogFooter className="sm:justify-start">
-                  <DialogClose>
-                    <div
-                      style={{ display: "flex", flexDirection: "row", gap: 10 }}
-                    >
-                      <Button
-                        type="button"
-                        variant="default"
-                        onClick={() => openDocument(openFileName)}
-                      >
-                        Open
-                      </Button>
-                    </div>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </MenubarMenu>
-          </Dialog>
+          <MenubarTrigger>
+            <Link to="/">Home</Link>
+          </MenubarTrigger>
+        </MenubarMenu>
+        <MenubarMenu>
           {fileName ? (
             <MenubarMenu>
               <MenubarTrigger onClick={() => saveDocument(code, fileName)}>

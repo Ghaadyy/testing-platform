@@ -19,32 +19,64 @@ import { generateCode } from "@/utils/generateCode";
 import { Test } from "@/models/Statement";
 import { setupEditor } from "@/utils/setupEditor";
 import { parseCode } from "@/utils/parseCode";
+import { toast } from "@/shadcn/hooks/use-toast";
+import { TestFile } from "@/models/TestFile";
 
-type Props = { checks: Check[]; rerunHandler: (id: number) => void };
+type Props = {
+  checks: Check[];
+  rerunHandler: (id: number) => void;
+  fileName: string;
+};
 
-function Dashboard({ checks, rerunHandler }: Props) {
-  const { code, setCode, fileName } = useContext(MainContext);
+async function openDocument(
+  fileName: string,
+  onSuccess: (file: TestFile) => void,
+  onError?: (err?: unknown) => void
+) {
+  try {
+    const res = await fetch(`http://localhost:5064/api/tests/${fileName}`);
+    if (!res.ok) {
+      if (onError) onError();
+      return;
+    }
+
+    const file: TestFile = await res.json();
+    onSuccess(file);
+  } catch (err) {
+    if (onError) onError(err);
+  }
+}
+
+async function getTestRuns(
+  fileName: string,
+  onSuccess: (testRuns: TestRun[]) => void
+) {
+  try {
+    const res = await fetch(`http://localhost:5064/api/tests/${fileName}/runs`);
+    const testRuns: TestRun[] = await res.json();
+    onSuccess(testRuns);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+function Dashboard({ checks, rerunHandler, fileName }: Props) {
+  const { code, setCode } = useContext(MainContext);
   const [tests, setTests] = useState<Test[]>([]);
-  const [isCode, setIsCode] = useState<boolean>(false);
+  const [isCode, setIsCode] = useState<boolean>(true);
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
-  async function getTestRuns(fileName: string) {
-    try {
-      const res = await fetch(
-        `http://localhost:5064/api/tests/${fileName}/runs`
-      );
-      const testRuns: TestRun[] = await res.json();
-      console.log(testRuns);
-      setTestRuns(testRuns);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
   useEffect(() => {
-    if (fileName) getTestRuns(fileName);
-  }, [fileName]);
+    openDocument(fileName, ({ content }) => {
+      setCode(content);
+      setTests(parseCode(content));
+      toast({
+        title: "File opened successfully",
+      });
+    });
+    getTestRuns(fileName, (runs) => setTestRuns(runs));
+  }, [fileName, setCode]);
 
   return (
     <ResizablePanelGroup
