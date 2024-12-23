@@ -6,9 +6,12 @@ import { useState } from "react";
 import Menu from "@/components/Menu";
 import { MainContext } from "@/context/MainContext";
 import { Check } from "@/models/Check";
+import { useParams } from "react-router";
 
-function App() {
-  const [fileName, setFileName] = useState<string>("");
+function EditorScreen() {
+  const { test } = useParams();
+
+  const [fileName, setFileName] = useState<string>(test!);
   const [code, setCode] = useState<string>("");
   const [checks, setChecks] = useState<Check[]>([]);
 
@@ -34,16 +37,7 @@ function App() {
         setCode,
       }}
     >
-      <div
-        style={{
-          width: "100vw",
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-          padding: 10,
-        }}
-      >
+      <div className="h-screen w-screen flex flex-col gap-3 p-3">
         <Menu
           runTest={() =>
             runTest(`ws://localhost:5064/api/tests/${fileName}/run`)
@@ -51,6 +45,7 @@ function App() {
         />
         <Dashboard
           checks={checks}
+          fileName={test!}
           rerunHandler={(id: number) =>
             runTest(`ws://localhost:5064/api/tests/${id}/compiled/run`)
           }
@@ -61,4 +56,4 @@ function App() {
   );
 }
 
-export default App;
+export default EditorScreen;
