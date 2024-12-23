@@ -12,12 +12,28 @@ public class TestsController(ITestsRepository testsRepository, TestExecutionServ
     private readonly TestExecutionService _testExecutionService = testExecutionService;
     private const string userId = "userId";
 
+    [HttpGet]
+    public ActionResult<List<TestFile>> GetTestFiles()
+    {
+        var files = _testsRepository.GetTestFiles();
+        return Ok(files);
+    }
+
     [HttpGet("{fileName}")]
     public ActionResult<TestFile> GetTestFile(string fileName)
     {
         var file = _testsRepository.GetTestFile(fileName);
         if (file is null) return NotFound();
         return Ok(file);
+    }
+
+    [HttpDelete("{fileName}")]
+    public async Task<ActionResult<TestFile>> DeleteTestFile(string fileName)
+    {
+        var file = _testsRepository.GetTestFile(fileName);
+        if (file is null) return NotFound();
+        await _testsRepository.DeleteTestFile(file);
+        return NoContent();
     }
 
     [HttpPost]
