@@ -5,8 +5,15 @@ namespace RestrictedNL.Models;
 
 public class TestsRepository(TestContext context) : ITestsRepository
 {
+    public List<TestFile> GetTestFiles() => context.TestFiles.ToList();
+
     public TestFile? GetTestFile(string fileName)
         => context.TestFiles.Where(t => t.Name == fileName).FirstOrDefault();
+
+    public async Task DeleteTestFile(TestFile file) {
+        context.TestFiles.Remove(file);
+        await context.SaveChangesAsync();
+    }
 
     public TestRun? GetTestRun(int runId)
         => context.TestRuns.Where(test => test.Id == runId).FirstOrDefault();
