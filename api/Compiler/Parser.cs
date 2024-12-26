@@ -7,8 +7,22 @@ public static class Parser
 {
     private const string _dllImportPath = @"librestricted_nl_lib";
 
-    [DllImport(_dllImportPath, CallingConvention = CallingConvention.Cdecl)]
-    public static extern bool parse(string path, out string code);
+    [DllImport(_dllImportPath, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool parse(string path, out string code, out IntPtr errors, out int errorCount);
+
+    public static (string code, string[] errors) Parse(string path) {
+        parse(path, out string code, out IntPtr errors, out int errorCount);
+
+        List<string> errs = [];
+
+        for(int i=0; i < errorCount; ++i) {
+            IntPtr errorPtr = Marshal.ReadIntPtr(errors, i*IntPtr.Size);
+            string? error = Marshal.PtrToStringAnsi(errorPtr);
+            if(error is not null) errs.Add(error);
+        }
+
+        return (code, errs.ToArray());
+    }
 
     public static string wrapWithSockets(string code)
     {
