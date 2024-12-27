@@ -10,8 +10,8 @@ import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import { TestRun } from "@/models/TestRun";
 import TestRunTable from "./TestRunTable";
-import TestAlert from "./TestAlert";
-import { Check } from "@/models/Check";
+import TestLogs from "./TestLogs";
+import { Log } from "@/models/Log";
 import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
@@ -22,8 +22,8 @@ import { toast } from "@/shadcn/hooks/use-toast";
 import { TestFile } from "@/models/TestFile";
 
 type Props = {
-  checks: Check[];
-  rerunHandler: (id: number) => void;
+  logs: Log[];
+  onRerun: (id: number) => void;
 };
 
 async function openDocument(
@@ -58,7 +58,7 @@ async function getTestRuns(
   }
 }
 
-function Dashboard({ checks, rerunHandler }: Props) {
+function Dashboard({ logs, onRerun }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
     useContext(MainContext);
 
@@ -132,25 +132,26 @@ function Dashboard({ checks, rerunHandler }: Props) {
             beforeMount={setupEditor}
           />
         ) : (
-          <TestCreator tests={tests} setTests={setTests} />
+          <TestCreator />
         )}
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={50}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel className="flex flex-col gap-3 p-3" defaultSize={60}>
-            <TestRunTable testRuns={testRuns} rerunHandler={rerunHandler} />
+            <TestRunTable testRuns={testRuns} onRerun={onRerun} />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
             <h1 className="font-bold text-2xl">Logs</h1>
-            <ScrollArea className="h-full w-full">
-              {checks.length === 0 && (
+            <ScrollArea>
+              {logs.length === 0 ? (
                 <p>There are no tests running yet. Try running a test first!</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <TestLogs logs={logs} />
+                </div>
               )}
-              <div className="flex flex-col gap-3">
-                <TestAlert checks={checks} />
-              </div>
             </ScrollArea>
           </ResizablePanel>
         </ResizablePanelGroup>

@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import Menu from "@/components/Menu";
 import { MainContext } from "@/context/MainContext";
-import { Check } from "@/models/Check";
+import { Log } from "@/models/Log";
 import { useParams } from "react-router";
 import { useToast } from "@/shadcn/hooks/use-toast";
 import { generateCode } from "@/utils/generateCode";
@@ -16,7 +16,7 @@ function EditorScreen() {
   const { test } = useParams();
   const { toast } = useToast();
 
-  const [checks, setChecks] = useState<Check[]>([]);
+  const [logs, setLogs] = useState<Log[]>([]);
 
   const [fileName, setFileName] = useState<string>(test!);
   const [code, setCode] = useState<string>("");
@@ -24,13 +24,13 @@ function EditorScreen() {
   const [tests, setTests] = useState<Test[]>([]);
 
   async function runTest(url: string) {
-    setChecks([]);
+    setLogs([]);
     const socket = new WebSocket(url);
 
     socket.onopen = () => console.log("WebSocket connection established.");
 
     socket.onmessage = (event) =>
-      setChecks((prevChecks) => [...prevChecks, JSON.parse(event.data)]);
+      setLogs((prevLogs) => [...prevLogs, JSON.parse(event.data)]);
 
     socket.onerror = (error) => console.error("WebSocket error: ", error);
     socket.onclose = () => console.log("WebSocket connection closed.");
@@ -101,8 +101,8 @@ function EditorScreen() {
           onSave={handleSave}
         />
         <Dashboard
-          checks={checks}
-          rerunHandler={(id: number) =>
+          logs={logs}
+          onRerun={(id: number) =>
             runTest(`ws://localhost:5064/api/tests/${id}/compiled/run`)
           }
         />
