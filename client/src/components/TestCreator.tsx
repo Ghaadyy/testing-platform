@@ -48,7 +48,7 @@ function TestCreator({
         ))}
         <div className="self-end flex flex-row gap-3">
           <Dialog>
-            <DialogTrigger>
+            <DialogTrigger asChild>
               <Button>Add test</Button>
             </DialogTrigger>
             <DialogContent>
@@ -61,7 +61,7 @@ function TestCreator({
                 />
               </DialogHeader>
               <DialogFooter className="sm:justify-start">
-                <DialogClose>
+                <DialogClose asChild>
                   <Button
                     type="button"
                     variant="default"
