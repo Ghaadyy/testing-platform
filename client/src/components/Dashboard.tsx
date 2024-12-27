@@ -63,14 +63,43 @@ async function getTestRuns(
 function Dashboard({ checks, rerunHandler, fileName }: Props) {
   const { code, setCode } = useContext(MainContext);
   const [tests, setTests] = useState<Test[]>([]);
-  const [isCode, setIsCode] = useState<boolean>(true);
+  const [isCode, setIsCode] = useState<boolean>(false);
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
+
+  function handleEditorSwitch(checked: boolean) {
+    if (checked) {
+      setCode(generateCode(tests));
+      setIsCode(checked);
+    } else {
+      const [parsedTests, status] = parseCode(code);
+      if (!status) {
+        toast({
+          title: "Test contains syntax errors!",
+          variant: "destructive",
+          description:
+            "Please fix these errors before switching to the UI editor.",
+        });
+        setIsCode(true);
+      } else {
+        setTests(parsedTests);
+        setIsCode(checked);
+      }
+    }
+  }
 
   useEffect(() => {
     openDocument(fileName, ({ content }) => {
       setCode(content);
-      setTests(parseCode(content));
+      setTests(() => {
+        const [parsedTests, status] = parseCode(content);
+        if (!status)
+          toast({
+            title: "Test contains syntax errors!",
+          });
+
+        return parsedTests;
+      });
       toast({
         title: "File opened successfully",
       });
@@ -88,11 +117,7 @@ function Dashboard({ checks, rerunHandler, fileName }: Props) {
           <Switch
             id="code-toggle"
             checked={isCode}
-            onCheckedChange={(checked) => {
-              if (checked) setCode(generateCode(tests));
-              else setTests(parseCode(code));
-              setIsCode(checked);
-            }}
+            onCheckedChange={handleEditorSwitch}
           />
           <Label htmlFor="code-toggle">
             {isCode ? "Use visual editor" : "Use code editor"}
@@ -115,7 +140,7 @@ function Dashboard({ checks, rerunHandler, fileName }: Props) {
             beforeMount={setupEditor}
           />
         ) : (
-          <TestCreator defaultTests={tests} onChange={setTests} />
+          <TestCreator tests={tests} setTests={setTests} />
         )}
       </ResizablePanel>
       <ResizableHandle withHandle />
