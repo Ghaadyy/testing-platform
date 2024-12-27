@@ -16,13 +16,12 @@ import { Input } from "@/shadcn/components/ui/input";
 import { useToast } from "@/shadcn/hooks/use-toast";
 
 function TestCreator({
-  defaultTests,
-  onChange,
+  tests,
+  setTests,
 }: {
-  onChange: (tests: Test[]) => void;
-  defaultTests: Test[];
+  tests: Test[];
+  setTests: React.Dispatch<React.SetStateAction<Test[]>>;
 }) {
-  const [tests, setTests] = useState<Test[]>(defaultTests);
   const [testName, setTestName] = useState<string>("");
   const { toast } = useToast();
 
@@ -30,7 +29,10 @@ function TestCreator({
     <div className="py-5 overflow-y-scroll">
       <div className="flex flex-col gap-3">
         {tests.map((test, id) => (
-          <div className="rounded-md bg-transparent border-input border-2 border-solid p-3 flex flex-col gap-3">
+          <div
+            key={id}
+            className="rounded-md bg-transparent border-input border-2 border-solid p-3 flex flex-col gap-3"
+          >
             <h1 className="font-bold">{test.name}</h1>
             <StatementCreator
               defaultStatements={test.statements}
@@ -38,7 +40,6 @@ function TestCreator({
                 setTests((prevTests) => {
                   const updatedTests = [...prevTests];
                   updatedTests[id].statements = newStatements;
-                  onChange(updatedTests);
                   return updatedTests;
                 })
               }
@@ -79,7 +80,6 @@ function TestCreator({
                             statements: [],
                           },
                         ];
-                        onChange(updated);
                         return updated;
                       });
                       setTestName("");

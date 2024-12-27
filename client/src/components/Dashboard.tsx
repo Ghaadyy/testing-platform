@@ -63,14 +63,14 @@ async function getTestRuns(
 function Dashboard({ checks, rerunHandler, fileName }: Props) {
   const { code, setCode } = useContext(MainContext);
   const [tests, setTests] = useState<Test[]>([]);
-  const [isCode, setIsCode] = useState<boolean>(true);
+  const [isCode, setIsCode] = useState<boolean>(false);
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
   useEffect(() => {
     openDocument(fileName, ({ content }) => {
       setCode(content);
-      setTests(parseCode(content));
+      setTests(() => parseCode(content));
       toast({
         title: "File opened successfully",
       });
@@ -115,7 +115,7 @@ function Dashboard({ checks, rerunHandler, fileName }: Props) {
             beforeMount={setupEditor}
           />
         ) : (
-          <TestCreator defaultTests={tests} onChange={setTests} />
+          <TestCreator tests={tests} setTests={setTests} />
         )}
       </ResizablePanel>
       <ResizableHandle withHandle />
