@@ -13,7 +13,7 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
     private readonly SocketsRepository _socketsRepository = socketsRepository;
     private readonly ITestsRepository _testsRepository = testsRepository;
 
-    public async Task<IActionResult> RunTestAsync(WebSocket socket, string fileName, string userId)
+    public async Task RunTestAsync(WebSocket socket, string fileName, string userId)
     {
         _socketsRepository.AddSocket(userId, socket);
 
@@ -21,36 +21,46 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
         if (file is null)
         {
             await CloseConnection(socket, userId);
-            return new NotFoundObjectResult("File not found");
+            await SendMessage(socket, "File not found.", false);
+            await SendMessage(socket, "Connection closed", true);
+            return;
         }
 
-        var status = Parser.parse(file.Content, out string seleniumCode);
-        if (!status)
+        var (code, errors) = Parser.Parse(file.Content);
+        if (errors.Length > 0)
         {
+            await SendMessage(socket, "Could not compile test file.", false);
+            foreach(string err in errors) {
+                await SendMessage(socket, err, false);
+            }
+            await SendMessage(socket, "Connection closed", true);
             await CloseConnection(socket, userId);
-            return new BadRequestObjectResult("Could not compile test file.");
+            return;
         }
 
         await SendMessage(socket, "Compiled successfully", true);
 
-        return await HandleTestExecutionAsync(socket, fileName, userId, seleniumCode);
+        await HandleTestExecutionAsync(socket, fileName, userId, code);
     }
 
-    public async Task<IActionResult> RunCompiledTestAsync(WebSocket socket, string userId, int runId)
+    public async Task RunCompiledTestAsync(WebSocket socket, string userId, int runId)
     {
         _socketsRepository.AddSocket(userId, socket);
 
         var testRun = _testsRepository.GetTestRun(runId);
 
-        if (testRun is null) return new NotFoundObjectResult("File not found");
+        if (testRun is null) {
+            await SendMessage(socket, "File not found.", false);
+            await CloseConnection(socket, userId);
+            return;
+        }
+
         await SendMessage(socket, "Loaded test successfully", true);
-
         string seleniumCode = testRun.CompiledCode;
-
-        return await HandleTestExecutionAsync(socket, testRun.Name, userId, seleniumCode);
+        await HandleTestExecutionAsync(socket, testRun.Name, userId, seleniumCode);
     }
 
-    private async Task<IActionResult> HandleTestExecutionAsync(WebSocket socket, string testName, string userId, string seleniumCode)
+    private async Task HandleTestExecutionAsync(WebSocket socket, string testName, string userId, string seleniumCode)
     {
         string tempFilePath = Path.GetTempFileName() + ".js";
 
@@ -59,8 +69,10 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
 
         if (!Success)
         {
+            await SendMessage(socket, "Could not run test files", false);
+            await SendMessage(socket, "Connection closed", true);
             await CloseConnection(socket, userId);
-            return new StatusCodeResult(500); //, "Could not run test file."
+            return;
         }
 
         await _testsRepository.UploadTestRun(new TestRun
@@ -74,8 +86,6 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
 
         await SendMessage(socket, "Connection closed", true);
         await CloseConnection(socket, userId);
-
-        return new EmptyResult();
     }
 
     private static async Task<(bool Success, long Duration)> RunTestProcessAsync(string tempFilePath)

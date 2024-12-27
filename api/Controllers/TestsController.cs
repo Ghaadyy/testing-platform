@@ -67,7 +67,8 @@ public class TestsController(ITestsRepository testsRepository, TestExecutionServ
         {
             using var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-            return await _testExecutionService.RunTestAsync(socket, fileName, userId);
+            await _testExecutionService.RunTestAsync(socket, fileName, userId);
+            return new EmptyResult();
         }
 
         return BadRequest("This should be a WebSocket connection");
@@ -90,7 +91,8 @@ public class TestsController(ITestsRepository testsRepository, TestExecutionServ
         {
             using var socket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-            return await _testExecutionService.RunCompiledTestAsync(socket, userId, runId);
+            await _testExecutionService.RunCompiledTestAsync(socket, userId, runId);
+            return new EmptyResult();
         }
 
         return BadRequest("This should be a WebSocket connection");
