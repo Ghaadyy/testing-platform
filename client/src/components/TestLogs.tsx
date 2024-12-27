@@ -1,10 +1,10 @@
 import { CircleCheck, CircleX } from "lucide-react";
-import { Check } from "@/models/Check";
+import { Log } from "@/models/Log";
 
-type Props = { testName?: string; checks: Check[] };
+type Props = { testName?: string; logs: Log[] };
 
-function TestAlert({ checks }: Props) {
-  return checks.map(({ message, passed }) => (
+function TestLogs({ logs }: Props) {
+  return logs.map(({ message, passed }) => (
     <div key={message} className="flex flex-row gap-2 items-center">
       {passed ? <CircleCheck color="green" /> : <CircleX color="red" />}
       <p>{message}</p>
@@ -12,4 +12,4 @@ function TestAlert({ checks }: Props) {
   ));
 }
 
-export default TestAlert;
+export default TestLogs;

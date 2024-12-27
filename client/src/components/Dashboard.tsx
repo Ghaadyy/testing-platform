@@ -10,8 +10,8 @@ import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import { TestRun } from "@/models/TestRun";
 import TestRunTable from "./TestRunTable";
-import TestAlert from "./TestAlert";
-import { Check } from "@/models/Check";
+import TestLogs from "./TestLogs";
+import { Log } from "@/models/Log";
 import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
@@ -22,7 +22,7 @@ import { toast } from "@/shadcn/hooks/use-toast";
 import { TestFile } from "@/models/TestFile";
 
 type Props = {
-  checks: Check[];
+  logs: Log[];
   onRerun: (id: number) => void;
 };
 
@@ -58,7 +58,7 @@ async function getTestRuns(
   }
 }
 
-function Dashboard({ checks, onRerun }: Props) {
+function Dashboard({ logs, onRerun }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
     useContext(MainContext);
 
@@ -145,11 +145,11 @@ function Dashboard({ checks, onRerun }: Props) {
           <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
             <h1 className="font-bold text-2xl">Logs</h1>
             <ScrollArea className="h-full w-full">
-              {checks.length === 0 && (
+              {logs.length === 0 && (
                 <p>There are no tests running yet. Try running a test first!</p>
               )}
               <div className="flex flex-col gap-3">
-                <TestAlert checks={checks} />
+                <TestLogs logs={logs} />
               </div>
             </ScrollArea>
           </ResizablePanel>

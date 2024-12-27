@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import Menu from "@/components/Menu";
 import { MainContext } from "@/context/MainContext";
-import { Check } from "@/models/Check";
+import { Check } from "@/models/Log";
 import { useParams } from "react-router";
 import { useToast } from "@/shadcn/hooks/use-toast";
 import { generateCode } from "@/utils/generateCode";
