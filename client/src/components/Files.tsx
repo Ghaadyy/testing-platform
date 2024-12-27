@@ -36,6 +36,32 @@ const sortHeader = (name: string) => {
   );
 };
 
+function Actions({ onDelete }: { onDelete: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem disabled>
+          <CopyIcon /> Copy
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled>
+          <EditIcon /> Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDelete}>
+          <TrashIcon /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function Files() {
   async function getTests() {
     try {
@@ -73,33 +99,13 @@ function Files() {
         const file = row.original;
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <CopyIcon /> Copy
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <EditIcon /> Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  deleteFile(file.name, () =>
-                    setTests((prev) => prev.filter((t) => t.name !== file.name))
-                  )
-                }
-              >
-                <TrashIcon /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Actions
+            onDelete={() =>
+              deleteFile(file.name, () =>
+                setTests((prev) => prev.filter((t) => t.name !== file.name))
+              )
+            }
+          />
         );
       },
     },
