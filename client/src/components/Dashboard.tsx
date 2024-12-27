@@ -144,13 +144,14 @@ function Dashboard({ logs, onRerun }: Props) {
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
             <h1 className="font-bold text-2xl">Logs</h1>
-            <ScrollArea className="h-full w-full">
-              {logs.length === 0 && (
+            <ScrollArea>
+              {logs.length === 0 ? (
                 <p>There are no tests running yet. Try running a test first!</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <TestLogs logs={logs} />
+                </div>
               )}
-              <div className="flex flex-col gap-3">
-                <TestLogs logs={logs} />
-              </div>
             </ScrollArea>
           </ResizablePanel>
         </ResizablePanelGroup>
