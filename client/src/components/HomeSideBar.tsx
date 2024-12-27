@@ -67,7 +67,7 @@ function HomeSideBar({ children }: HomeSideBarProps) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <Dialog>
-                    <DialogTrigger className="w-full">
+                    <DialogTrigger asChild className="w-full">
                       <SidebarMenuButton>
                         <FilePlusIcon /> New File
                       </SidebarMenuButton>
@@ -85,7 +85,7 @@ function HomeSideBar({ children }: HomeSideBarProps) {
                         onChange={(e) => setFileName(e.target.value)}
                       />
                       <DialogFooter className="sm:justify-start">
-                        <DialogClose>
+                        <DialogClose asChild>
                           <div className="flex flex-row gap-3">
                             <Button
                               type="button"

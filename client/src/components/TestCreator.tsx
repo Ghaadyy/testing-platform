@@ -11,6 +11,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/shadcn/components/ui/dialog";
 import { Input } from "@/shadcn/components/ui/input";
 import { useToast } from "@/shadcn/hooks/use-toast";
@@ -48,12 +49,15 @@ function TestCreator({
         ))}
         <div className="self-end flex flex-row gap-3">
           <Dialog>
-            <DialogTrigger>
+            <DialogTrigger asChild>
               <Button>Add test</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>What is the test's name?</DialogTitle>
+                <DialogDescription>
+                  Enter a name to create your test.
+                </DialogDescription>
                 <Input
                   placeholder="Test name..."
                   onChange={(e) => setTestName(e.target.value)}
@@ -61,7 +65,7 @@ function TestCreator({
                 />
               </DialogHeader>
               <DialogFooter className="sm:justify-start">
-                <DialogClose>
+                <DialogClose asChild>
                   <Button
                     type="button"
                     variant="default"
