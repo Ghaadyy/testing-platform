@@ -132,7 +132,7 @@ function Dashboard({ checks, onRerun }: Props) {
             beforeMount={setupEditor}
           />
         ) : (
-          <TestCreator tests={tests} setTests={setTests} />
+          <TestCreator />
         )}
       </ResizablePanel>
       <ResizableHandle withHandle />
