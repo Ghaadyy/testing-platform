@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/shadcn/components/ui/dialog";
-import { useToast } from "@/shadcn/hooks/use-toast";
 import { Input } from "@/shadcn/components/ui/input";
 import { Button } from "@/shadcn/components/ui/button";
 import { useContext, useState } from "react";
@@ -23,40 +22,14 @@ import { Moon, Sun } from "lucide-react";
 import { Link } from "react-router";
 
 type Props = {
-  runTest: () => void;
+  onRun: () => void;
+  onSave: (fileName: string) => void;
 };
 
-function Menu({ runTest }: Props) {
-  const { toast } = useToast();
-  const { fileName, setFileName, code, setCode } = useContext(MainContext);
+function Menu({ onRun, onSave }: Props) {
+  const { fileName } = useContext(MainContext);
 
   const [saveFileName, setSaveFileName] = useState<string>("");
-
-  async function saveDocument(code: string, savedFileName: string) {
-    const res = await fetch("http://localhost:5064/api/tests", {
-      method: fileName ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fileName: savedFileName,
-        content: code,
-      }),
-    });
-
-    if (!res.ok) {
-      toast({
-        title: "File with this name already exists",
-      });
-      return;
-    }
-
-    setFileName(savedFileName);
-    setCode(code);
-    toast({
-      title: "Saved successfully!",
-    });
-  }
 
   const { theme, setTheme } = useTheme();
 
@@ -71,7 +44,7 @@ function Menu({ runTest }: Props) {
         <MenubarMenu>
           {fileName ? (
             <MenubarMenu>
-              <MenubarTrigger onClick={() => saveDocument(code, fileName)}>
+              <MenubarTrigger onClick={() => onSave(fileName)}>
                 Save
               </MenubarTrigger>
             </MenubarMenu>
@@ -100,7 +73,7 @@ function Menu({ runTest }: Props) {
                       <Button
                         type="button"
                         variant="default"
-                        onClick={() => saveDocument(code, saveFileName)}
+                        onClick={() => onSave(saveFileName)}
                       >
                         Save
                       </Button>
@@ -111,7 +84,7 @@ function Menu({ runTest }: Props) {
             </Dialog>
           )}
           <MenubarMenu>
-            <MenubarTrigger onClick={runTest} disabled={!fileName}>
+            <MenubarTrigger onClick={onRun} disabled={!fileName}>
               Run
             </MenubarTrigger>
           </MenubarMenu>
