@@ -31,7 +31,7 @@ enum Token {
   INVALID = ".",
 }
 
-export function parseCode(code: string): [Test[], boolean] {
+export function parseCode(code: string): [Test[], boolean, number] {
   const tests: Test[] = [];
   let token: Token;
   let yytext: string;
@@ -250,5 +250,5 @@ export function parseCode(code: string): [Test[], boolean] {
 
   token = scanner();
   const status = program();
-  return [tests, status];
+  return [tests, status, id];
 }
