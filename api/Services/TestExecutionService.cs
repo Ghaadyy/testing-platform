@@ -30,7 +30,8 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
         if (errors.Length > 0)
         {
             await SendMessage(socket, "Could not compile test file.", false);
-            foreach(string err in errors) {
+            foreach (string err in errors)
+            {
                 await SendMessage(socket, err, false);
             }
             await SendMessage(socket, "Connection closed", true);
@@ -49,7 +50,8 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
 
         var testRun = _testsRepository.GetTestRun(runId);
 
-        if (testRun is null) {
+        if (testRun is null)
+        {
             await SendMessage(socket, "File not found.", false);
             await CloseConnection(socket, userId);
             return;
@@ -93,14 +95,15 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
         Stopwatch stopwatch = new();
 
         // install npm dependencies
-        var npmInstallInfo = new ProcessStartInfo {
-            FileName = "npm",
+        var npmInstallInfo = new ProcessStartInfo
+        {
+            FileName = OperatingSystem.IsWindows() ? "npm.cmd" : "npm",
             Arguments = "install websocket selenium-webdriver",
             UseShellExecute = false,
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(tempFilePath),
         };
-        
+
         using var npmProc = Process.Start(npmInstallInfo);
         if (npmProc is null)
         {
