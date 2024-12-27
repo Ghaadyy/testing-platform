@@ -102,7 +102,7 @@ function EditorScreen() {
         />
         <Dashboard
           checks={checks}
-          rerunHandler={(id: number) =>
+          onRerun={(id: number) =>
             runTest(`ws://localhost:5064/api/tests/${id}/compiled/run`)
           }
         />

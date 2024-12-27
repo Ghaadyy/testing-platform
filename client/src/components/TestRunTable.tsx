@@ -9,9 +9,9 @@ import {
   TableRow,
 } from "@/shadcn/components/ui/table";
 
-type Props = { testRuns: TestRun[]; rerunHandler: (id: number) => void };
+type Props = { testRuns: TestRun[]; onRerun: (id: number) => void };
 
-function TestRunTable({ testRuns, rerunHandler }: Props) {
+function TestRunTable({ testRuns, onRerun }: Props) {
   return (
     <Table>
       <TableHeader>
@@ -31,7 +31,7 @@ function TestRunTable({ testRuns, rerunHandler }: Props) {
             <TableCell>{new Date(ranAt).toLocaleString()}</TableCell>
             <TableCell>{passed ? "Passed" : "Failed"}</TableCell>
             <TableCell>
-              <Button onClick={() => rerunHandler(id)}>Rerun</Button>
+              <Button onClick={() => onRerun(id)}>Rerun</Button>
             </TableCell>
           </TableRow>
         ))}

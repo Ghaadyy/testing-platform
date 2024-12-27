@@ -23,7 +23,7 @@ import { TestFile } from "@/models/TestFile";
 
 type Props = {
   checks: Check[];
-  rerunHandler: (id: number) => void;
+  onRerun: (id: number) => void;
 };
 
 async function openDocument(
@@ -58,7 +58,7 @@ async function getTestRuns(
   }
 }
 
-function Dashboard({ checks, rerunHandler }: Props) {
+function Dashboard({ checks, onRerun }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
     useContext(MainContext);
 
@@ -139,7 +139,7 @@ function Dashboard({ checks, rerunHandler }: Props) {
       <ResizablePanel defaultSize={50}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel className="flex flex-col gap-3 p-3" defaultSize={60}>
-            <TestRunTable testRuns={testRuns} rerunHandler={rerunHandler} />
+            <TestRunTable testRuns={testRuns} onRerun={onRerun} />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
