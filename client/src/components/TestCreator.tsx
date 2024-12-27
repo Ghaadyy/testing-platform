@@ -11,6 +11,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/shadcn/components/ui/dialog";
 import { Input } from "@/shadcn/components/ui/input";
 import { useToast } from "@/shadcn/hooks/use-toast";
@@ -54,6 +55,9 @@ function TestCreator({
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>What is the test's name?</DialogTitle>
+                <DialogDescription>
+                  Enter a name to create your test.
+                </DialogDescription>
                 <Input
                   placeholder="Test name..."
                   onChange={(e) => setTestName(e.target.value)}
