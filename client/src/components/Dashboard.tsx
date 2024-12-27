@@ -63,6 +63,7 @@ function Dashboard({ logs, onRerun }: Props) {
     useContext(MainContext);
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
+  const [statementId, setStatementId] = useState<number>(1);
 
   function handleEditorSwitch(checked: boolean) {
     if (checked) {
@@ -87,11 +88,10 @@ function Dashboard({ logs, onRerun }: Props) {
 
   useEffect(() => {
     openDocument(fileName, ({ content }) => {
+      const [parsedTests, _, nextId] = parseCode(content);
       setCode(content);
-      setTests(() => {
-        const [parsedTests] = parseCode(content);
-        return parsedTests;
-      });
+      setTests(parsedTests);
+      setStatementId(nextId);
       toast({
         title: "File opened successfully",
       });
@@ -132,7 +132,7 @@ function Dashboard({ logs, onRerun }: Props) {
             beforeMount={setupEditor}
           />
         ) : (
-          <TestCreator />
+          <TestCreator statementId={statementId} />
         )}
       </ResizablePanel>
       <ResizableHandle withHandle />

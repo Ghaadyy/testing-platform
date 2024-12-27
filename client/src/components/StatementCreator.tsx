@@ -3,8 +3,6 @@ import ActionInput from "./StatementInput";
 import { useState } from "react";
 import type { Statement } from "@/models/Statement";
 
-let idx = 1; // global idx for statements
-
 function AddActionButton({ onClick }: ButtonProps) {
   return <Button onClick={onClick}>+</Button>;
 }
@@ -12,13 +10,16 @@ function AddActionButton({ onClick }: ButtonProps) {
 type StatementCreatorProps = {
   defaultStatements: Statement[];
   onChange?: (newStatements: Statement[]) => void;
+  statementId: number;
 };
 
 function StatementCreator({
   defaultStatements,
   onChange,
+  statementId,
 }: StatementCreatorProps) {
   const [statements, setStatements] = useState<Statement[]>(defaultStatements);
+  const [id, setId] = useState<number>(statementId);
 
   function onMove(fromId: number, toId: number) {
     setStatements((prevStatements) => {
@@ -59,12 +60,13 @@ function StatementCreator({
               const updated: Statement[] = [
                 ...prevStatements,
                 {
-                  id: idx++,
+                  id,
                   action: "visit",
                   url: "",
                 },
               ];
               if (onChange !== undefined) onChange(updated);
+              setId((prev) => prev + 1);
               return updated;
             })
           }

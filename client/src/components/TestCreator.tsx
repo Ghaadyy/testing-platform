@@ -76,7 +76,7 @@ function AddTestDialog() {
   );
 }
 
-function TestCreator() {
+function TestCreator({ statementId }: { statementId: number }) {
   const { tests, setTests } = useContext(MainContext);
 
   return (
@@ -98,6 +98,7 @@ function TestCreator() {
                     return updatedTests;
                   })
                 }
+                statementId={statementId}
               />
             </div>
           ))}
