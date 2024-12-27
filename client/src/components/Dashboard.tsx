@@ -16,7 +16,6 @@ import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
 import { generateCode } from "@/utils/generateCode";
-import { Test } from "@/models/Statement";
 import { setupEditor } from "@/utils/setupEditor";
 import { parseCode } from "@/utils/parseCode";
 import { toast } from "@/shadcn/hooks/use-toast";
@@ -25,7 +24,6 @@ import { TestFile } from "@/models/TestFile";
 type Props = {
   checks: Check[];
   rerunHandler: (id: number) => void;
-  fileName: string;
 };
 
 async function openDocument(
@@ -60,10 +58,9 @@ async function getTestRuns(
   }
 }
 
-function Dashboard({ checks, rerunHandler, fileName }: Props) {
-  const { code, setCode } = useContext(MainContext);
-  const [tests, setTests] = useState<Test[]>([]);
-  const [isCode, setIsCode] = useState<boolean>(false);
+function Dashboard({ checks, rerunHandler }: Props) {
+  const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
+    useContext(MainContext);
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
@@ -92,12 +89,7 @@ function Dashboard({ checks, rerunHandler, fileName }: Props) {
     openDocument(fileName, ({ content }) => {
       setCode(content);
       setTests(() => {
-        const [parsedTests, status] = parseCode(content);
-        if (!status)
-          toast({
-            title: "Test contains syntax errors!",
-          });
-
+        const [parsedTests] = parseCode(content);
         return parsedTests;
       });
       toast({
@@ -105,7 +97,7 @@ function Dashboard({ checks, rerunHandler, fileName }: Props) {
       });
     });
     getTestRuns(fileName, (runs) => setTestRuns(runs));
-  }, [fileName, setCode]);
+  }, []);
 
   return (
     <ResizablePanelGroup
