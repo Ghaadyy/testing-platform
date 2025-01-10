@@ -3,7 +3,7 @@ import { FilesTable } from "./FilesTable";
 import { ColumnDef, Column } from "@tanstack/react-table";
 import { ArrowUpDown, CopyIcon, EditIcon, TrashIcon } from "lucide-react";
 import { Button } from "@/shadcn/components/ui/button";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router";
 
 import { MoreHorizontal } from "lucide-react";
@@ -16,10 +16,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shadcn/components/ui/dropdown-menu";
+import { UserContext } from "@/context/UserContext";
+import { API_URL } from "@/main";
 
-async function deleteFile(fileName: string, onSuccess: () => void) {
-  const rest = await fetch(`http://localhost:5064/api/tests/${fileName}`, {
+async function deleteFile(
+  fileName: string,
+  token: string,
+  onSuccess: () => void
+) {
+  const rest = await fetch(`${API_URL}/api/tests/${fileName}`, {
     method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   if (rest.ok) onSuccess();
 }
@@ -63,9 +72,15 @@ function Actions({ onDelete }: { onDelete: () => void }) {
 }
 
 function Files() {
-  async function getTests() {
+  const { token } = useContext(UserContext);
+
+  async function getTests(token: string) {
     try {
-      const res = await fetch("http://localhost:5064/api/tests");
+      const res = await fetch(`${API_URL}/api/tests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const tests: TestFile[] = await res.json();
       setTests(tests);
     } catch (err) {
@@ -101,7 +116,7 @@ function Files() {
         return (
           <Actions
             onDelete={() =>
-              deleteFile(file.name, () =>
+              deleteFile(file.name, token!, () =>
                 setTests((prev) => prev.filter((t) => t.name !== file.name))
               )
             }
@@ -112,8 +127,8 @@ function Files() {
   ];
 
   useEffect(() => {
-    getTests();
-  }, []);
+    getTests(token!);
+  }, [token]);
 
   return (
     <FilesTable

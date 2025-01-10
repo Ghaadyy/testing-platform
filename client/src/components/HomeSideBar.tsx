@@ -14,6 +14,7 @@ import { Input } from "@/shadcn/components/ui/input";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -23,25 +24,30 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/shadcn/components/ui/sidebar";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { toast } from "@/shadcn/hooks/use-toast";
 import { useNavigate } from "react-router";
 import { useTheme } from "@/shadcn/components/theme-provider";
+import { NavUser } from "./NavUser";
+import { UserContext } from "@/context/UserContext";
+import { API_URL } from "@/main";
 
 type HomeSideBarProps = {
   children: React.ReactNode;
 };
 
 function HomeSideBar({ children }: HomeSideBarProps) {
+  const { user, token } = useContext(UserContext);
   const [fileName, setFileName] = useState<string>("");
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   async function createFile(fileName: string) {
-    const res = await fetch("http://localhost:5064/api/tests", {
+    const res = await fetch(`${API_URL}/api/tests`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         fileName,
@@ -107,6 +113,11 @@ function HomeSideBar({ children }: HomeSideBarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+        {user && (
+          <SidebarFooter>
+            <NavUser user={user} />
+          </SidebarFooter>
+        )}
       </Sidebar>
       <div className="h-screen w-screen flex flex-col gap-3 p-3">
         <div className="flex flex-row gap-3 justify-between">
