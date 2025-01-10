@@ -5,19 +5,19 @@ namespace RestrictedNL.Models;
 
 public class SocketsRepository
 {
-    private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
+    private readonly ConcurrentDictionary<int, WebSocket> _sockets = new();
 
-    public void AddSocket(string id, WebSocket socket)
+    public void AddSocket(int id, WebSocket socket)
     {
         _sockets.TryAdd(id, socket);
     }
 
-    public WebSocket GetSocket(string id)
+    public WebSocket GetSocket(int id)
     {
         return _sockets[id];
     }
 
-    public void RemoveSocket(string id)
+    public void RemoveSocket(int id)
     {
         _sockets.TryRemove(id, out _);
     }

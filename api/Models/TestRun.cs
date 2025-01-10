@@ -7,6 +7,7 @@ namespace RestrictedNL.Models;
 public record TestRun
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
     public int Id { get; set; }
 

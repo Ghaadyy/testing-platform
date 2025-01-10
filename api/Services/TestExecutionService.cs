@@ -13,11 +13,11 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
     private readonly SocketsRepository _socketsRepository = socketsRepository;
     private readonly ITestsRepository _testsRepository = testsRepository;
 
-    public async Task RunTestAsync(WebSocket socket, string fileName, string userId)
+    public async Task RunTestAsync(WebSocket socket, string fileName, int userId)
     {
         _socketsRepository.AddSocket(userId, socket);
 
-        var file = _testsRepository.GetTestFile(fileName);
+        var file = _testsRepository.GetTestFile(fileName, userId);
         if (file is null)
         {
             await CloseConnection(socket, userId);
@@ -44,7 +44,7 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
         await HandleTestExecutionAsync(socket, fileName, userId, code);
     }
 
-    public async Task RunCompiledTestAsync(WebSocket socket, string userId, int runId)
+    public async Task RunCompiledTestAsync(WebSocket socket, int userId, int runId)
     {
         _socketsRepository.AddSocket(userId, socket);
 
@@ -62,11 +62,11 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
         await HandleTestExecutionAsync(socket, testRun.Name, userId, seleniumCode);
     }
 
-    private async Task HandleTestExecutionAsync(WebSocket socket, string testName, string userId, string seleniumCode)
+    private async Task HandleTestExecutionAsync(WebSocket socket, string testName, int userId, string seleniumCode)
     {
         string tempFilePath = Path.GetTempFileName() + ".js";
 
-        File.WriteAllText(tempFilePath, Parser.wrapWithSockets(seleniumCode));
+        File.WriteAllText(tempFilePath, Parser.wrapWithSockets(seleniumCode, userId));
         var (Success, Duration) = await RunTestProcessAsync(tempFilePath);
 
         if (!Success)
@@ -136,7 +136,7 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
         return (true, stopwatch.ElapsedMilliseconds);
     }
 
-    private async Task CloseConnection(WebSocket socket, string userId)
+    private async Task CloseConnection(WebSocket socket, int userId)
     {
         _socketsRepository.RemoveSocket(userId);
         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);

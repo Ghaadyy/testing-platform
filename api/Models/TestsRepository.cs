@@ -5,12 +5,14 @@ namespace RestrictedNL.Models;
 
 public class TestsRepository(TestContext context) : ITestsRepository
 {
-    public List<TestFile> GetTestFiles() => context.TestFiles.ToList();
+    public List<TestFile> GetTestFiles(int userId) =>
+        [.. context.TestFiles.Where(f => f.UserId == userId)];
 
-    public TestFile? GetTestFile(string fileName)
-        => context.TestFiles.Where(t => t.Name == fileName).FirstOrDefault();
+    public TestFile? GetTestFile(string fileName, int userId)
+        => context.TestFiles.Where(t => t.Name == fileName && t.UserId == userId).FirstOrDefault();
 
-    public async Task DeleteTestFile(TestFile file) {
+    public async Task DeleteTestFile(TestFile file)
+    {
         context.TestFiles.Remove(file);
         await context.SaveChangesAsync();
     }
@@ -29,14 +31,15 @@ public class TestsRepository(TestContext context) : ITestsRepository
         await context.SaveChangesAsync();
     }
 
-    public async Task UploadTestFile(string fileName, string content)
+    public async Task UploadTestFile(int userId, string fileName, string content)
     {
         context.TestFiles.Add(new TestFile
         {
             Name = fileName,
             Content = content,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            UserId = userId
         });
 
         await context.SaveChangesAsync();
