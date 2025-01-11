@@ -1,7 +1,7 @@
 import Dashboard from "@/components/Dashboard";
 import { Toaster } from "@/shadcn/components/ui/toaster";
 
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import Menu from "@/components/Menu";
 import { MainContext } from "@/context/MainContext";
@@ -12,6 +12,8 @@ import { generateCode } from "@/utils/generateCode";
 import { Test } from "@/models/Statement";
 import { parseCode } from "@/utils/parseCode";
 import { UserContext } from "@/context/UserContext";
+import { TestRun } from "@/models/TestRun";
+import { API_URL } from "@/main";
 
 function EditorScreen() {
   const { test } = useParams();
@@ -25,6 +27,7 @@ function EditorScreen() {
   const [code, setCode] = useState<string>("");
   const [isCode, setIsCode] = useState<boolean>(false);
   const [tests, setTests] = useState<Test[]>([]);
+  const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
   async function runTest(url: string) {
     setLogs([]);
@@ -39,11 +42,14 @@ function EditorScreen() {
       setLogs((prevLogs) => [...prevLogs, JSON.parse(event.data)]);
 
     socket.onerror = (error) => console.error("WebSocket error: ", error);
-    socket.onclose = () => console.log("WebSocket connection closed.");
+    socket.onclose = () => {
+      console.log("WebSocket connection closed.");
+      getTestRuns(fileName, token!);
+    };
   }
 
   async function saveDocument(code: string, savedFileName: string) {
-    const res = await fetch("http://localhost:5064/api/tests", {
+    const res = await fetch(`${API_URL}/api/tests`, {
       method: fileName ? "PUT" : "POST",
       headers: {
         "Content-Type": "application/json",
@@ -89,6 +95,24 @@ function EditorScreen() {
     }
   }
 
+  async function getTestRuns(fileName: string, token: string) {
+    try {
+      const res = await fetch(`${API_URL}/api/tests/${fileName}/runs`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const testRuns: TestRun[] = await res.json();
+      setTestRuns(testRuns);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  useEffect(() => {
+    getTestRuns(fileName, token!);
+  });
+
   return (
     <MainContext.Provider
       value={{
@@ -109,6 +133,7 @@ function EditorScreen() {
         />
         <Dashboard
           logs={logs}
+          testRuns={testRuns}
           onRerun={(id: number) =>
             runTest(`ws://localhost:5064/api/tests/${id}/compiled/run`)
           }

@@ -26,6 +26,7 @@ import { API_URL } from "@/main";
 type Props = {
   logs: Log[];
   onRerun: (id: number) => void;
+  testRuns: TestRun[];
 };
 
 async function openDocument(
@@ -52,30 +53,11 @@ async function openDocument(
   }
 }
 
-async function getTestRuns(
-  fileName: string,
-  token: string,
-  onSuccess: (testRuns: TestRun[]) => void
-) {
-  try {
-    const res = await fetch(`${API_URL}/api/tests/${fileName}/runs`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const testRuns: TestRun[] = await res.json();
-    onSuccess(testRuns);
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-function Dashboard({ logs, onRerun }: Props) {
+function Dashboard({ logs, onRerun, testRuns }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
     useContext(MainContext);
   const { token } = useContext(UserContext);
 
-  const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [statementId, setStatementId] = useState<number>(1);
 
   function handleEditorSwitch(checked: boolean) {
@@ -109,7 +91,6 @@ function Dashboard({ logs, onRerun }: Props) {
         title: "File opened successfully",
       });
     });
-    getTestRuns(fileName, token!, (runs) => setTestRuns(runs));
   }, [fileName, setCode, setTests, token]);
 
   return (
