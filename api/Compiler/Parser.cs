@@ -26,6 +26,25 @@ public static class Parser
         return (code, errs.ToArray());
     }
 
+    public static string ConfigureSeeClick(string code, string token, string url)
+    {
+        StringBuilder sb = new();
+
+        sb.Append(Environment.NewLine);
+        sb.Append(code);
+        sb.Append(Environment.NewLine);
+
+        sb.Append(@$"function getToken() {{
+            return '{token}';
+        }}
+        
+        function getServerURL() {{
+            return '{url}';
+        }}");
+
+        return sb.ToString();
+    }
+
     public static string wrapWithSockets(string code, int userId)
     {
         StringBuilder sb = new();
@@ -62,13 +81,19 @@ public static class Parser
         function afterTestHook() {{
             socket.close()
         }}
+
+        function sleep(ms) {{
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }}
         
-        function afterEachTestHook() {{
+        async function afterEachTestHook() {{
             sendAssert(socket, {{
                 userId: {userId},
                 message: this.currentTest.title,
                 passed: this.currentTest.state === 'passed',
             }});
+
+            await sleep(2000);
         }}");
 
         return sb.ToString();
