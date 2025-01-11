@@ -1,13 +1,20 @@
 using RestrictedNL.Models;
 using System.Net.WebSockets;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace RestrictedNL.Middlewares;
 
+class LogMessage
+{
+    public int UserId { get; set; }
+    public string Message { get; set; } = "";
+    public bool Passed { get; set; }
+}
+
 public class WebSocketMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next = next;
-    private async Task HandleSelenium(HttpContext context)
+    private static async Task HandleSelenium(HttpContext context)
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
         var _socketsRepo = context.RequestServices.GetRequiredService<SocketsRepository>();
@@ -18,7 +25,7 @@ public class WebSocketMiddleware(RequestDelegate next)
             while (webSocket.State == WebSocketState.Open)
             {
                 byte[] buff = new byte[1024 * 4];
-                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buff), CancellationToken.None);
+                var result = await webSocket.ReceiveAsync(new(buff), CancellationToken.None);
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
@@ -27,11 +34,12 @@ public class WebSocketMiddleware(RequestDelegate next)
                 }
 
                 var message = Encoding.UTF8.GetString(buff, 0, result.Count);
-                logger.LogInformation(message);
+                var log = JsonConvert.DeserializeObject<LogMessage>(message);
 
-                // message.userId = user id from selenium
-
-                await _socketsRepo.GetSocket("userId").SendAsync(new ArraySegment<byte>(buff, 0, result.Count), WebSocketMessageType.Text, true, CancellationToken.None);
+                if (log is not null)
+                {
+                    await _socketsRepo.GetSocket(log.UserId).SendAsync(new(buff, 0, result.Count), WebSocketMessageType.Text, true, CancellationToken.None);
+                }
             }
         }
         else
@@ -49,7 +57,7 @@ public class WebSocketMiddleware(RequestDelegate next)
         }
         else
         {
-            await _next(context);
+            await next(context);
         }
     }
 }

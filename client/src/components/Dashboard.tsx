@@ -20,6 +20,8 @@ import { setupEditor } from "@/utils/setupEditor";
 import { parseCode } from "@/utils/parseCode";
 import { toast } from "@/shadcn/hooks/use-toast";
 import { TestFile } from "@/models/TestFile";
+import { UserContext } from "@/context/UserContext";
+import { API_URL } from "@/main";
 
 type Props = {
   logs: Log[];
@@ -28,11 +30,16 @@ type Props = {
 
 async function openDocument(
   fileName: string,
+  token: string,
   onSuccess: (file: TestFile) => void,
   onError?: (err?: unknown) => void
 ) {
   try {
-    const res = await fetch(`http://localhost:5064/api/tests/${fileName}`);
+    const res = await fetch(`${API_URL}/api/tests/${fileName}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!res.ok) {
       if (onError) onError();
       return;
@@ -47,10 +54,15 @@ async function openDocument(
 
 async function getTestRuns(
   fileName: string,
+  token: string,
   onSuccess: (testRuns: TestRun[]) => void
 ) {
   try {
-    const res = await fetch(`http://localhost:5064/api/tests/${fileName}/runs`);
+    const res = await fetch(`${API_URL}/api/tests/${fileName}/runs`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const testRuns: TestRun[] = await res.json();
     onSuccess(testRuns);
   } catch (err) {
@@ -61,6 +73,7 @@ async function getTestRuns(
 function Dashboard({ logs, onRerun }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
     useContext(MainContext);
+  const { token } = useContext(UserContext);
 
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [statementId, setStatementId] = useState<number>(1);
@@ -87,8 +100,8 @@ function Dashboard({ logs, onRerun }: Props) {
   }
 
   useEffect(() => {
-    openDocument(fileName, ({ content }) => {
-      const [parsedTests, _, nextId] = parseCode(content);
+    openDocument(fileName, token!, ({ content }) => {
+      const [parsedTests, , nextId] = parseCode(content);
       setCode(content);
       setTests(parsedTests);
       setStatementId(nextId);
@@ -96,8 +109,8 @@ function Dashboard({ logs, onRerun }: Props) {
         title: "File opened successfully",
       });
     });
-    getTestRuns(fileName, (runs) => setTestRuns(runs));
-  }, []);
+    getTestRuns(fileName, token!, (runs) => setTestRuns(runs));
+  }, [fileName, setCode, setTests, token]);
 
   return (
     <ResizablePanelGroup

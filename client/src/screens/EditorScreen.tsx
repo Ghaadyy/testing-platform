@@ -1,7 +1,7 @@
 import Dashboard from "@/components/Dashboard";
 import { Toaster } from "@/shadcn/components/ui/toaster";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 
 import Menu from "@/components/Menu";
 import { MainContext } from "@/context/MainContext";
@@ -11,10 +11,13 @@ import { useToast } from "@/shadcn/hooks/use-toast";
 import { generateCode } from "@/utils/generateCode";
 import { Test } from "@/models/Statement";
 import { parseCode } from "@/utils/parseCode";
+import { UserContext } from "@/context/UserContext";
 
 function EditorScreen() {
   const { test } = useParams();
   const { toast } = useToast();
+
+  const { token } = useContext(UserContext);
 
   const [logs, setLogs] = useState<Log[]>([]);
 
@@ -27,7 +30,10 @@ function EditorScreen() {
     setLogs([]);
     const socket = new WebSocket(url);
 
-    socket.onopen = () => console.log("WebSocket connection established.");
+    socket.onopen = () => {
+      console.log("WebSocket connection established.");
+      socket.send(token!);
+    };
 
     socket.onmessage = (event) =>
       setLogs((prevLogs) => [...prevLogs, JSON.parse(event.data)]);
@@ -41,6 +47,7 @@ function EditorScreen() {
       method: fileName ? "PUT" : "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         fileName: savedFileName,
@@ -67,7 +74,7 @@ function EditorScreen() {
       await saveDocument(code, fileName);
     } else {
       const generatedCode = generateCode(tests);
-      const [_, status] = parseCode(generatedCode);
+      const [, status] = parseCode(generatedCode);
       if (status) {
         setCode(generatedCode);
         await saveDocument(generatedCode, fileName);

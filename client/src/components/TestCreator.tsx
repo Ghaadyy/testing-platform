@@ -14,7 +14,7 @@ import {
 } from "@/shadcn/components/ui/dialog";
 import { Input } from "@/shadcn/components/ui/input";
 import { useToast } from "@/shadcn/hooks/use-toast";
-import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/shadcn/components/ui/scroll-area";
 import { MainContext } from "@/context/MainContext";
 
 function AddTestDialog() {
@@ -81,7 +81,7 @@ function TestCreator({ statementId }: { statementId: number }) {
 
   return (
     <>
-      <ScrollArea>
+      <ScrollArea className="w-full">
         <div className="w-full flex flex-col gap-3">
           {tests.map((test, id) => (
             <div
@@ -103,6 +103,7 @@ function TestCreator({ statementId }: { statementId: number }) {
             </div>
           ))}
         </div>
+        <ScrollBar orientation="horizontal" />
       </ScrollArea>
       <AddTestDialog />
     </>

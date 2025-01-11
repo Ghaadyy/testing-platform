@@ -2,10 +2,10 @@ namespace RestrictedNL.Models;
 
 public interface ITestsRepository
 {
-    List<TestFile> GetTestFiles();
-    TestFile? GetTestFile(string fileName);
+    List<TestFile> GetTestFiles(int userId);
+    TestFile? GetTestFile(string fileName, int userId);
     Task DeleteTestFile(TestFile file);
-    Task UploadTestFile(string fileName, string content);
+    Task UploadTestFile(int userId, string fileName, string content);
     Task UpdateTestFile(TestFile file, string content);
     TestRun? GetTestRun(int runId);
     List<TestRun> GetTestRuns(string fileName);
