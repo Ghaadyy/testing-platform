@@ -8,12 +8,16 @@ using RestrictedNL.Models;
 
 namespace RestrictedNL.Services;
 
-public class TestExecutionService(SocketsRepository socketsRepository, ITestsRepository testsRepository)
+public class TestExecutionService(
+    SocketsRepository socketsRepository,
+    ITestsRepository testsRepository,
+    IConfiguration configuration
+    )
 {
     private readonly SocketsRepository _socketsRepository = socketsRepository;
     private readonly ITestsRepository _testsRepository = testsRepository;
 
-    public async Task RunTestAsync(WebSocket socket, string fileName, int userId)
+    public async Task RunTestAsync(WebSocket socket, string fileName, int userId, string token)
     {
         _socketsRepository.AddSocket(userId, socket);
 
@@ -41,10 +45,10 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
 
         await SendMessage(socket, "Compiled successfully", true);
 
-        await HandleTestExecutionAsync(socket, fileName, userId, code);
+        await HandleTestExecutionAsync(socket, fileName, userId, code, token);
     }
 
-    public async Task RunCompiledTestAsync(WebSocket socket, int userId, int runId)
+    public async Task RunCompiledTestAsync(WebSocket socket, int userId, int runId, string token)
     {
         _socketsRepository.AddSocket(userId, socket);
 
@@ -59,14 +63,21 @@ public class TestExecutionService(SocketsRepository socketsRepository, ITestsRep
 
         await SendMessage(socket, "Loaded test successfully", true);
         string seleniumCode = testRun.CompiledCode;
-        await HandleTestExecutionAsync(socket, testRun.Name, userId, seleniumCode);
+        await HandleTestExecutionAsync(socket, testRun.Name, userId, seleniumCode, token);
     }
 
-    private async Task HandleTestExecutionAsync(WebSocket socket, string testName, int userId, string seleniumCode)
+    private async Task HandleTestExecutionAsync(WebSocket socket, string testName, int userId, string seleniumCode, string token)
     {
         string tempFilePath = Path.GetTempFileName() + ".js";
 
-        File.WriteAllText(tempFilePath, Parser.wrapWithSockets(seleniumCode, userId));
+        string wrappedSockets = Parser.wrapWithSockets(seleniumCode, userId);
+        string wrappedSeeClick = Parser.ConfigureSeeClick(
+            wrappedSockets,
+            token,
+            configuration["ConnectionStrings:SeeClick"]!
+        );
+
+        File.WriteAllText(tempFilePath, wrappedSeeClick);
         var (Success, Duration) = await RunTestProcessAsync(tempFilePath);
 
         if (!Success)

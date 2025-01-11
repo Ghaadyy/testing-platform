@@ -21,7 +21,7 @@ public class TokenGenerator(IConfiguration configuration)
                 new SymmetricSecurityKey(
                    Encoding.UTF8.GetBytes(configuration["JWT:Secret"]!)
                 ),
-                SecurityAlgorithms.HmacSha256Signature)
+                "HS256")
             );
 
         return new JwtSecurityTokenHandler().WriteToken(jwtToken);

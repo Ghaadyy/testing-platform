@@ -90,12 +90,13 @@ public class TestsController(
 
             byte[] buff = new byte[1024 * 4];
             var result = await socket.ReceiveAsync(new(buff), CancellationToken.None);
-            var token = tokenRepository.ParseToken(Encoding.UTF8.GetString(buff, 0, result.Count));
+            var rawToken = Encoding.UTF8.GetString(buff, 0, result.Count);
+            var token = tokenRepository.ParseToken(rawToken);
 
             var id = tokenRepository.GetId(token!);
             if (id is null) return NotFound("Could not find user with the specified id.");
 
-            await testExecutionService.RunTestAsync(socket, fileName, id.Value);
+            await testExecutionService.RunTestAsync(socket, fileName, id.Value, rawToken);
             return new EmptyResult();
         }
 
@@ -121,12 +122,13 @@ public class TestsController(
 
             byte[] buff = new byte[1024 * 4];
             var result = await socket.ReceiveAsync(new(buff), CancellationToken.None);
-            var token = tokenRepository.ParseToken(Encoding.UTF8.GetString(buff, 0, result.Count));
+            var rawToken = Encoding.UTF8.GetString(buff, 0, result.Count);
+            var token = tokenRepository.ParseToken(rawToken);
 
             var id = tokenRepository.GetId(token!);
             if (id is null) return NotFound("Could not find user with the specified id.");
 
-            await testExecutionService.RunCompiledTestAsync(socket, id.Value, runId);
+            await testExecutionService.RunCompiledTestAsync(socket, id.Value, runId, rawToken);
             return new EmptyResult();
         }
 
