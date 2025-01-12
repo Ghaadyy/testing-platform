@@ -10,11 +10,12 @@ import { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 
 import type { Statement, ElementState, ElementType } from "@/models/Statement";
-import { GripVerticalIcon } from "lucide-react";
+import { GripVerticalIcon, TrashIcon } from "lucide-react";
 
 type StatementInputProps = {
   id: number;
   defaultStatement: Statement | undefined;
+  setStatements: React.Dispatch<React.SetStateAction<Statement[]>>;
   onChange?: (newStatement: Statement) => void;
   onMove?: (fromId: number, toId: number) => void;
 };
@@ -24,6 +25,7 @@ function StatementInput({
   defaultStatement,
   onChange,
   onMove,
+  setStatements,
 }: StatementInputProps) {
   const [statement, setStatement] = useState<Statement>(
     defaultStatement ?? {
@@ -183,7 +185,16 @@ function StatementInput({
         </Select>
       )}
 
-      <div className="ml-auto">
+      <div className="ml-auto flex flex-row gap-2">
+        <TrashIcon
+          className="cursor-pointer"
+          size={20}
+          onClick={() => {
+            setStatements((prevStatements) =>
+              prevStatements.filter((st) => st.id !== id)
+            );
+          }}
+        />
         <GripVerticalIcon size={20} />
       </div>
     </div>

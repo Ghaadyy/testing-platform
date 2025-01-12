@@ -99,6 +99,11 @@ function TestCreator({ statementId }: { statementId: number }) {
                   })
                 }
                 statementId={statementId}
+                onDelete={() =>
+                  setTests((prevTests) =>
+                    prevTests.filter((t) => t.name !== test.name)
+                  )
+                }
               />
             </div>
           ))}
