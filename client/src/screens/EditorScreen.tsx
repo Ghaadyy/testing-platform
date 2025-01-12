@@ -1,11 +1,10 @@
 import Dashboard from "@/components/Dashboard";
 import { Toaster } from "@/shadcn/components/ui/toaster";
 
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import Menu from "@/components/Menu";
 import { MainContext } from "@/context/MainContext";
-import { Log } from "@/models/Log";
 import { useParams } from "react-router";
 import { useToast } from "@/shadcn/hooks/use-toast";
 import { generateCode } from "@/utils/generateCode";
@@ -14,6 +13,7 @@ import { parseCode } from "@/utils/parseCode";
 import { UserContext } from "@/context/UserContext";
 import { TestRun } from "@/models/TestRun";
 import { API_URL } from "@/main";
+import { TestLogGroup } from "@/components/TestLogs";
 
 function EditorScreen() {
   const { test } = useParams();
@@ -21,11 +21,11 @@ function EditorScreen() {
 
   const { token } = useContext(UserContext);
 
-  const [logs, setLogs] = useState<Log[]>([]);
+  const [logs, setLogs] = useState<TestLogGroup[]>([]);
 
   const [fileName, setFileName] = useState<string>(test!);
   const [code, setCode] = useState<string>("");
-  const [isCode, setIsCode] = useState<boolean>(false);
+  const [isCode, setIsCode] = useState<boolean>(true);
   const [tests, setTests] = useState<Test[]>([]);
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
@@ -38,8 +38,7 @@ function EditorScreen() {
       socket.send(token!);
     };
 
-    socket.onmessage = (event) =>
-      setLogs((prevLogs) => [...prevLogs, JSON.parse(event.data)]);
+    socket.onmessage = (event) => setLogs(JSON.parse(event.data));
 
     socket.onerror = (error) => console.error("WebSocket error: ", error);
     socket.onclose = () => {
@@ -48,52 +47,58 @@ function EditorScreen() {
     };
   }
 
-  async function saveDocument(code: string, savedFileName: string) {
-    const res = await fetch(`${API_URL}/api/tests`, {
-      method: fileName ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        fileName: savedFileName,
-        content: code,
-      }),
-    });
-
-    if (!res.ok) {
-      toast({
-        title: "File with this name already exists",
+  const saveDocument = useCallback(
+    async function (code: string, savedFileName: string) {
+      const res = await fetch(`${API_URL}/api/tests`, {
+        method: fileName ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fileName: savedFileName,
+          content: code,
+        }),
       });
-      return;
-    }
 
-    setFileName(savedFileName);
-    setCode(code);
-    toast({
-      title: "Saved successfully!",
-    });
-  }
-
-  async function handleSave(fileName: string) {
-    if (isCode) {
-      await saveDocument(code, fileName);
-    } else {
-      const generatedCode = generateCode(tests);
-      const [, status] = parseCode(generatedCode);
-      if (status) {
-        setCode(generatedCode);
-        await saveDocument(generatedCode, fileName);
-      } else {
+      if (!res.ok) {
         toast({
-          title: "Test syntax error!",
-          description:
-            "Please make sure you have filled out all the fields correctly then try again. Your progress is unsaved.",
-          variant: "destructive",
+          title: "File with this name already exists",
         });
+        return;
       }
-    }
-  }
+
+      setFileName(savedFileName);
+      setCode(code);
+      toast({
+        title: "Saved successfully!",
+      });
+    },
+    [fileName, toast, token]
+  );
+
+  const handleSave = useCallback(
+    async function (fileName: string) {
+      if (isCode) {
+        await saveDocument(code, fileName);
+      } else {
+        const generatedCode = generateCode(tests);
+        const [, status] = parseCode(generatedCode);
+        if (status) {
+          setCode(generatedCode);
+          await saveDocument(generatedCode, fileName);
+        } else {
+          toast({
+            title: "Test syntax error!",
+            description:
+              "Please make sure you have filled out all the fields correctly then try again. Your progress is unsaved.",
+            variant: "destructive",
+          });
+        }
+      }
+    },
+    [code, isCode, saveDocument, tests, toast]
+  );
 
   async function getTestRuns(fileName: string, token: string) {
     try {
@@ -111,7 +116,19 @@ function EditorScreen() {
 
   useEffect(() => {
     getTestRuns(fileName, token!);
-  });
+  }, [fileName, token]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+        event.preventDefault();
+        handleSave(fileName);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [fileName, handleSave]);
 
   return (
     <MainContext.Provider

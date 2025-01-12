@@ -1,5 +1,5 @@
 import { TestFile } from "@/models/TestFile";
-import { FilesTable } from "./FilesTable";
+import { DataTable } from "./DataTable";
 import { ColumnDef, Column } from "@tanstack/react-table";
 import { ArrowUpDown, CopyIcon, EditIcon, TrashIcon } from "lucide-react";
 import { Button } from "@/shadcn/components/ui/button";
@@ -131,7 +131,7 @@ function Files() {
   }, [token]);
 
   return (
-    <FilesTable
+    <DataTable
       columns={columns}
       data={tests.map((file) => ({
         ...file,

@@ -45,7 +45,7 @@ public static class Parser
         return sb.ToString();
     }
 
-    public static string wrapWithSockets(string code, int userId)
+    public static string wrapWithSockets(string code, int userId, string fileName)
     {
         StringBuilder sb = new();
 
@@ -62,8 +62,12 @@ public static class Parser
             }}
         }} 
 
-        async function beforeTestHook() {{
-            socket = new WebSocket('ws://localhost:5064/ws/selenium');
+        function sleep(ms) {{
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }}
+
+        async function beforeHook() {{
+            socket = new WebSocket('ws://localhost:5064/ws/selenium?fileName={fileName}&userId={userId}');
             socket.onopen = async function () {{
                 console.log('open');
             }};
@@ -78,19 +82,34 @@ public static class Parser
             }};
         }}
 
-        function afterTestHook() {{
+        function afterHook() {{
             socket.close()
         }}
 
-        function sleep(ms) {{
-            return new Promise(resolve => setTimeout(resolve, ms));
+         async function afterEachAssertHook(message, passed, test) {{
+            sendAssert(socket, {{
+                test,
+                message,
+                passed,
+                type: 1
+            }});
+        }}
+
+         async function beforeEachHook() {{
+            sendAssert(socket, {{
+                test: this.currentTest.title,
+                message: null,
+                passed: null,
+                type: 0
+            }});
         }}
         
-        async function afterEachTestHook() {{
+        async function afterEachHook() {{
             sendAssert(socket, {{
-                userId: {userId},
-                message: this.currentTest.title,
+                test: this.currentTest.title,
+                message: null,
                 passed: this.currentTest.state === 'passed',
+                type: 2
             }});
 
             await sleep(2000);
