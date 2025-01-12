@@ -10,8 +10,7 @@ import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import { TestRun } from "@/models/TestRun";
 import TestRunTable from "./TestRunTable";
-import TestLogs from "./TestLogs";
-import { Log } from "@/models/Log";
+import TestLogs, { TestLogGroup } from "./TestLogs";
 import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
@@ -24,7 +23,7 @@ import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 
 type Props = {
-  logs: Log[];
+  logs: TestLogGroup[];
   onRerun: (id: number) => void;
   testRuns: TestRun[];
 };
@@ -139,7 +138,7 @@ function Dashboard({ logs, onRerun, testRuns }: Props) {
           <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
             <h1 className="font-bold text-2xl">Logs</h1>
             <ScrollArea>
-              {logs.length === 0 ? (
+              {Object.keys(logs).length === 0 ? (
                 <p>There are no tests running yet. Try running a test first!</p>
               ) : (
                 <div className="flex flex-col gap-3">

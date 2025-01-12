@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using RestrictedNL.Compiler;
+using RestrictedNL.Middlewares;
 using RestrictedNL.Models;
 
 namespace RestrictedNL.Services;
@@ -25,25 +26,32 @@ public class TestExecutionService(
         if (file is null)
         {
             await CloseConnection(socket, userId);
-            await SendMessage(socket, "File not found.", false);
-            await SendMessage(socket, "Connection closed", true);
+            // await SendMessage(socket, "File not found.", false);
+            // await SendMessage(socket, "Connection closed", true);
             return;
         }
 
         var (code, errors) = Parser.Parse(file.Content);
         if (errors.Length > 0)
         {
-            await SendMessage(socket, "Could not compile test file.", false);
+            // await SendMessage(socket, "Could not compile test file.", false);
+            var testGroup = new TestLogGroupItem
+            {
+                Test = new LogMessage("Could not compile test file", LogType.AFTER_EACH_MESSAGE, null, false),
+                Assertions = []
+            };
+
             foreach (string err in errors)
             {
-                await SendMessage(socket, err, false);
+                testGroup.Assertions.Add(new LogMessage("Could not compile test file", LogType.AFTER_EACH_ASSERT_MESSAGE, err, false));
             }
-            await SendMessage(socket, "Connection closed", true);
+            // await SendMessage(socket, "Connection closed", true);
+            await SendMessage(socket, [testGroup]);
             await CloseConnection(socket, userId);
             return;
         }
 
-        await SendMessage(socket, "Compiled successfully", true);
+        // await SendMessage(socket, "Compiled successfully", true);
 
         await HandleTestExecutionAsync(socket, fileName, userId, code, token);
     }
@@ -56,12 +64,12 @@ public class TestExecutionService(
 
         if (testRun is null)
         {
-            await SendMessage(socket, "File not found.", false);
+            // await SendMessage(socket, "File not found.", false);
             await CloseConnection(socket, userId);
             return;
         }
 
-        await SendMessage(socket, "Loaded test successfully", true);
+        // await SendMessage(socket, "Loaded test successfully", true);
         string seleniumCode = testRun.CompiledCode;
         await HandleTestExecutionAsync(socket, testRun.Name, userId, seleniumCode, token);
     }
@@ -70,7 +78,7 @@ public class TestExecutionService(
     {
         string tempFilePath = Path.GetTempFileName() + ".js";
 
-        string wrappedSockets = Parser.wrapWithSockets(seleniumCode, userId);
+        string wrappedSockets = Parser.wrapWithSockets(seleniumCode, userId, testName);
         string wrappedSeeClick = Parser.ConfigureSeeClick(
             wrappedSockets,
             token,
@@ -80,24 +88,15 @@ public class TestExecutionService(
         File.WriteAllText(tempFilePath, wrappedSeeClick);
         var (Success, Duration) = await RunTestProcessAsync(tempFilePath);
 
-        if (!Success)
-        {
-            await SendMessage(socket, "Could not run test files", false);
-            await SendMessage(socket, "Connection closed", true);
-            await CloseConnection(socket, userId);
-            return;
-        }
-
         await _testsRepository.UploadTestRun(new TestRun
         {
             Name = testName,
-            Passed = true,
+            Passed = Success,
             RanAt = DateTime.UtcNow,
             Duration = Duration,
             CompiledCode = seleniumCode,
         });
 
-        await SendMessage(socket, "Connection closed", true);
         await CloseConnection(socket, userId);
     }
 
@@ -144,7 +143,7 @@ public class TestExecutionService(
         stopwatch.Stop();
 
         File.Delete(tempFilePath);
-        return (true, stopwatch.ElapsedMilliseconds);
+        return (process.ExitCode == 0, stopwatch.ElapsedMilliseconds);
     }
 
     private async Task CloseConnection(WebSocket socket, int userId)
@@ -153,9 +152,9 @@ public class TestExecutionService(
         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
     }
 
-    private static async Task SendMessage(WebSocket socket, string message, bool passed)
+    private static async Task SendMessage(WebSocket socket, List<TestLogGroupItem> message)
     {
-        var response = JsonConvert.SerializeObject(new { message, passed });
-        await socket.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(response)), WebSocketMessageType.Text, true, CancellationToken.None);
+        var response = JsonConvert.SerializeObject(message);
+        await socket.SendAsync(new(Encoding.UTF8.GetBytes(response)), WebSocketMessageType.Text, true, CancellationToken.None);
     }
 }

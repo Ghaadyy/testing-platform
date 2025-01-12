@@ -95,22 +95,33 @@ export function parseCode(code: string): [Test[], boolean, number] {
     return false;
   }
 
-  function body(test: Test) {
-    if (action(test)) {
-      if (!body(test)) return false;
-      return true;
+  function body(test: Test): boolean {
+    if (
+      token == Token.CLICK ||
+      token == Token.TYPE ||
+      token == Token.CHECK_IF ||
+      token == Token.VISIT
+    ) {
+      return action(test) && body(test);
     }
 
     return true;
   }
 
   function action(test: Test) {
-    if (click(test)) return true;
-    if (visit(test)) return true;
-    if (type(test)) return true;
-    if (check(test)) return true;
+    switch (token) {
+      case Token.CLICK:
+        return click(test);
 
-    return false;
+      case Token.VISIT:
+        return visit(test);
+      case Token.TYPE:
+        return type(test);
+      case Token.CHECK_IF:
+        return check(test);
+      default:
+        return false;
+    }
   }
 
   function click(test: Test) {

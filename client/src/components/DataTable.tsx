@@ -47,7 +47,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
 }
 
-export function FilesTable<TData, TValue>({
+export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
@@ -79,7 +79,7 @@ export function FilesTable<TData, TValue>({
     <div className="flex flex-col gap-4 py-4">
       <div className="flex items-center">
         <Input
-          placeholder="Filter test files..."
+          placeholder="Filter..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
