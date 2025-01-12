@@ -20,8 +20,6 @@ tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code
 model = AutoModelForCausalLM.from_pretrained("./SeeClick", device_map="cuda", trust_remote_code=True, bf16=True).eval()
 model.generation_config = GenerationConfig.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code=True)
 
-prompt = "In this UI screenshot, what is the position of the element corresponding to the command \"{}\" (with point)?"
-
 def authorize(f):
     @wraps(f)
     def decorator(*args, **kwargs):
@@ -48,18 +46,19 @@ def authorize(f):
 def getCoordinates():
     data = request.json
     description = data['description']
+    element_type = data['element_type']
     image = base64.b64decode(data['image'])
-
-    print(description)
 
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_img:
         img_path = temp_img.name
         temp_img.write(image)
-        
+    
     try:
+        prompt = "In this UI screenshot, what is the position of the {} corresponding to the description \"{}\" (with point)?"
+
         query = tokenizer.from_list_format([
             {'image': img_path},
-            {'text': prompt.format(description)},
+            {'text': prompt.format(element_type, description)},
         ])
 
         response, _ = model.chat(tokenizer, query=query, history=None)
@@ -69,9 +68,6 @@ def getCoordinates():
             width, height = img.size
 
         point = (round(width*x), round(height*y))
-        print(response)
-        print(point)
-
         return jsonify(point)
         
     finally:
