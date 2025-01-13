@@ -48,7 +48,7 @@ function TestDropdown({ test, asserts }: { test: Log; asserts: Log[] }) {
       <CollapsibleContent>
         {asserts.map((log, index) => {
           return (
-            <div key={index} className="flex items-center gap-2">
+            <div key={index} className="flex items-center gap-2 py-3">
               {log.Passed ? (
                 <CircleCheck color="green" />
               ) : (
