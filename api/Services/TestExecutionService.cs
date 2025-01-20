@@ -1,84 +1,61 @@
 using System.Diagnostics;
-using System.Net.WebSockets;
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using RestrictedNL.Compiler;
-using RestrictedNL.Middlewares;
 using RestrictedNL.Models;
+using RestrictedNL.Models.Logs;
+using RestrictedNL.Models.Redis;
 
 namespace RestrictedNL.Services;
 
 public class TestExecutionService(
-    SocketsRepository socketsRepository,
     ITestsRepository testsRepository,
-    IConfiguration configuration
+    HttpRepository httpRepository,
+    IConfiguration configuration,
+    RedisProcessRepository processRepository,
+    RedisLogsRepository _logsRepo
     )
 {
-    private readonly SocketsRepository _socketsRepository = socketsRepository;
-    private readonly ITestsRepository _testsRepository = testsRepository;
-
-    public async Task RunTestAsync(WebSocket socket, string fileName, int userId, string token)
+    public async Task RunTestAsync(TestFile testFile, string token)
     {
-        _socketsRepository.AddSocket(userId, socket);
-
-        var file = _testsRepository.GetTestFile(fileName, userId);
-        if (file is null)
+        var (code, errors) = Parser.Parse(testFile.Content);
+        var group = new LogGroup
         {
-            await CloseConnection(socket, userId);
-            // await SendMessage(socket, "File not found.", false);
-            // await SendMessage(socket, "Connection closed", true);
-            return;
-        }
+            TestName = "Compiled succesfully",
+            Status = LogStatus.FINISHED,
+        };
 
-        var (code, errors) = Parser.Parse(file.Content);
         if (errors.Length > 0)
         {
-            // await SendMessage(socket, "Could not compile test file.", false);
-            var testGroup = new TestLogGroupItem
-            {
-                Test = new LogMessage("Could not compile test file", LogType.AFTER_EACH_MESSAGE, null, false),
-                Assertions = []
-            };
+            group.TestName = "Could not compile test file";
 
             foreach (string err in errors)
-            {
-                testGroup.Assertions.Add(new LogMessage("Could not compile test file", LogType.AFTER_EACH_ASSERT_MESSAGE, err, false));
-            }
-            // await SendMessage(socket, "Connection closed", true);
-            await SendMessage(socket, [testGroup]);
-            await CloseConnection(socket, userId);
+                group.Assertions.Add(new Assertion
+                {
+                    TestName = group.TestName,
+                    Message = err,
+                    Passed = false
+                });
+
+            await httpRepository.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
             return;
         }
 
-        // await SendMessage(socket, "Compiled successfully", true);
+        await httpRepository.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
 
-        await HandleTestExecutionAsync(socket, fileName, userId, code, token);
+        await HandleTestExecutionAsync(testFile.Id.ToString(), testFile.UserId, code, token);
     }
 
-    public async Task RunCompiledTestAsync(WebSocket socket, int userId, int runId, string token)
+    public async Task RunCompiledTestAsync(int userId, TestRun testRun, string token)
     {
-        _socketsRepository.AddSocket(userId, socket);
-
-        var testRun = _testsRepository.GetTestRun(runId);
-
-        if (testRun is null)
-        {
-            // await SendMessage(socket, "File not found.", false);
-            await CloseConnection(socket, userId);
-            return;
-        }
-
-        // await SendMessage(socket, "Loaded test successfully", true);
         string seleniumCode = testRun.CompiledCode;
-        await HandleTestExecutionAsync(socket, testRun.Name, userId, seleniumCode, token);
+        await HandleTestExecutionAsync(testRun.FileId.ToString(), userId, seleniumCode, token);
     }
 
-    private async Task HandleTestExecutionAsync(WebSocket socket, string testName, int userId, string seleniumCode, string token)
+    private async Task HandleTestExecutionAsync(string fileId, int userId, string seleniumCode, string token)
     {
         string tempFilePath = Path.GetTempFileName() + ".js";
 
-        string wrappedSockets = Parser.wrapWithSockets(seleniumCode, userId, testName);
+        Guid processId = Guid.NewGuid();
+        string wrappedSockets = Parser.WrapWithSockets(seleniumCode, processId);
         string wrappedSeeClick = Parser.ConfigureSeeClick(
             wrappedSockets,
             token,
@@ -86,29 +63,39 @@ public class TestExecutionService(
         );
 
         File.WriteAllText(tempFilePath, wrappedSeeClick);
-        var (Success, Duration) = await RunTestProcessAsync(tempFilePath);
 
-        await _testsRepository.UploadTestRun(new TestRun
+        var (Success, Duration) = await RunTestProcessAsync(processId, userId, fileId, tempFilePath);
+        var key = new LogKey(userId, fileId);
+        //Send close message for user to gracefully stop
+        await httpRepository.SendSseMessage(userId, fileId, [], "close");
+
+        Guid runId = Guid.NewGuid();
+        await testsRepository.UploadTestRun(new TestRun
         {
-            Name = testName,
+            Id = runId,
+            FileId = int.Parse(fileId),
             Passed = Success,
             RanAt = DateTime.UtcNow,
             Duration = Duration,
             CompiledCode = seleniumCode,
         });
 
-        await CloseConnection(socket, userId);
+        await _logsRepo.Save(key, runId);
+        await _logsRepo.Remove(key);
     }
 
-    private static async Task<(bool Success, long Duration)> RunTestProcessAsync(string tempFilePath)
+    private async Task<(bool Success, long Duration)> RunTestProcessAsync(Guid processId, int userId, string fileId, string tempFilePath)
     {
+        //Add process to repo
+        await processRepository.Add(processId, userId, fileId);
+
         Stopwatch stopwatch = new();
 
         // install npm dependencies
         var npmInstallInfo = new ProcessStartInfo
         {
             FileName = OperatingSystem.IsWindows() ? "npm.cmd" : "npm",
-            Arguments = "install websocket selenium-webdriver",
+            Arguments = "install websocket selenium-webdriver websocket",
             UseShellExecute = false,
             CreateNoWindow = true,
             WorkingDirectory = Path.GetDirectoryName(tempFilePath),
@@ -118,6 +105,11 @@ public class TestExecutionService(
         if (npmProc is null)
         {
             File.Delete(tempFilePath);
+            await httpRepository.SendSseMessage(userId, fileId, [new LogGroup
+            {
+                TestName = "Failed to start npm process for dependency installation",
+                Status = LogStatus.FINISHED,
+            }]);
             return (false, 0);
         }
         await npmProc.WaitForExitAsync();
@@ -136,6 +128,11 @@ public class TestExecutionService(
         {
             File.Delete(tempFilePath);
             stopwatch.Stop();
+            await httpRepository.SendSseMessage(userId, fileId, [new LogGroup
+            {
+                TestName = "Failed to start process",
+                Status = LogStatus.FINISHED
+            }]);
             return (false, stopwatch.ElapsedMilliseconds);
         }
 
@@ -143,18 +140,16 @@ public class TestExecutionService(
         stopwatch.Stop();
 
         File.Delete(tempFilePath);
+
+        if (process.ExitCode != 0)
+        {
+            await httpRepository.SendSseMessage(userId, fileId, [new LogGroup
+            {
+                TestName = $"Process terminated unexpectedly with exit code {process.ExitCode}",
+                Status = LogStatus.FINISHED
+            }]);
+        }
+
         return (process.ExitCode == 0, stopwatch.ElapsedMilliseconds);
-    }
-
-    private async Task CloseConnection(WebSocket socket, int userId)
-    {
-        _socketsRepository.RemoveSocket(userId);
-        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-    }
-
-    private static async Task SendMessage(WebSocket socket, List<TestLogGroupItem> message)
-    {
-        var response = JsonConvert.SerializeObject(message);
-        await socket.SendAsync(new(Encoding.UTF8.GetBytes(response)), WebSocketMessageType.Text, true, CancellationToken.None);
     }
 }

@@ -7,12 +7,12 @@ namespace RestrictedNL.Models;
 public record TestRun
 {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
-    public int Id { get; set; }
+    public required Guid Id { get; set; }
 
-    [Column("name")]
-    public required string Name { get; set; }
+    [ForeignKey("fileId")]
+    [Column("file_id")]
+    public required int FileId { get; set; }
 
     [Column("ran_at")]
     public required DateTime RanAt { get; set; }

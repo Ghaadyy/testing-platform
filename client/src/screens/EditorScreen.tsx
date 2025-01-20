@@ -13,7 +13,7 @@ import { parseCode } from "@/utils/parseCode";
 import { UserContext } from "@/context/UserContext";
 import { TestRun } from "@/models/TestRun";
 import { API_URL } from "@/main";
-import { TestLogGroup } from "@/components/TestLogs";
+import { LogGroup } from "@/models/Log";
 
 function EditorScreen() {
   const { test } = useParams();
@@ -21,7 +21,7 @@ function EditorScreen() {
 
   const { token } = useContext(UserContext);
 
-  const [logs, setLogs] = useState<TestLogGroup[]>([]);
+  const [logs, setLogs] = useState<LogGroup[]>([]);
 
   const [fileName, setFileName] = useState<string>(test!);
   const [code, setCode] = useState<string>("");
@@ -29,22 +29,46 @@ function EditorScreen() {
   const [tests, setTests] = useState<Test[]>([]);
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
+
   async function runTest(url: string) {
     setLogs([]);
-    const socket = new WebSocket(url);
 
-    socket.onopen = () => {
-      console.log("WebSocket connection established.");
-      socket.send(token!);
+    if (eventSource) {
+      eventSource.close();
+      console.log("Previous SSE connection closed.");
+    }
+
+    const newEventSource = new EventSource(`${url}?token=${token}`);
+    setEventSource(newEventSource);
+
+    newEventSource.onopen = () => {
+      console.log("SSE connection established.");
     };
 
-    socket.onmessage = (event) => setLogs(JSON.parse(event.data));
+    newEventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log(data);
+      const message = data.message;
+      const status = data.status;
 
-    socket.onerror = (error) => console.error("WebSocket error: ", error);
-    socket.onclose = () => {
-      console.log("WebSocket connection closed.");
-      getTestRuns(fileName, token!);
+      console.log(message);
+      console.log(status);
+
+      if (status === "close") {
+        console.log("Gracefully stopping...");
+        newEventSource.close();
+      } else {
+        setLogs(message);
+      }
     };
+
+    newEventSource.onerror = (error) => {
+      console.error("SSE error: ", error);
+      newEventSource.close();
+    };
+
+    return eventSource;
   }
 
   const saveDocument = useCallback(
@@ -114,10 +138,70 @@ function EditorScreen() {
     }
   }
 
+  const reconnect = (fileName: string) => {
+    console.log("Reconnecting...");
+
+    if (eventSource) {
+      eventSource.close();
+    }
+
+    const url = `http://localhost:5064/api/tests/${fileName}/reconnect?token=${token}`;
+    const newEventSource = new EventSource(url);
+    setEventSource(newEventSource);
+
+    newEventSource.onopen = () => {
+      console.log("Reconnected to running tests.");
+    };
+
+    newEventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const message = data.message;
+      const status = data.status;
+
+      console.log(message);
+      console.log(status);
+
+      if (status === "close") {
+        console.log("Gracefully stopping...");
+        newEventSource.close();
+      } else {
+        setLogs(message);
+      }
+    };
+
+    newEventSource.onerror = (err) => {
+      console.error("Error with EventSource: ", err);
+      newEventSource.close();
+    };
+  };
+
+  const cleanup = async (fileName: string) => {
+    if (eventSource) {
+      eventSource.close();
+    }
+    try {
+      const url = `http://localhost:5064/api/tests/${fileName}/cleanup`;
+      await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fileName }),
+      });
+      console.log(`Server resources cleaned up for file: ${fileName}`);
+    } catch (err) {
+      console.error("Error cleaning up server resources: ", err);
+    }
+  };
+
+  // Fetch test runs
   useEffect(() => {
-    getTestRuns(fileName, token!);
+    if (fileName && token) {
+      getTestRuns(fileName, token);
+    }
   }, [fileName, token]);
 
+  // Handle save input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === "s") {
@@ -129,6 +213,23 @@ function EditorScreen() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [fileName, handleSave]);
+
+  // Reconnect if possible when mounted and close connection and cleanup on unmount
+  useEffect(() => {
+    if (fileName) {
+      reconnect(fileName);
+    }
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+        console.log("SSE connection closed during cleanup.");
+      }
+      if (fileName) {
+        cleanup(fileName);
+      }
+    };
+  }, []);
 
   return (
     <MainContext.Provider
@@ -145,14 +246,16 @@ function EditorScreen() {
     >
       <div className="h-screen w-screen flex flex-col gap-3 p-3">
         <Menu
-          onRun={() => runTest(`ws://localhost:5064/api/tests/${fileName}/run`)}
+          onRun={() =>
+            runTest(`http://localhost:5064/api/tests/${fileName}/run`)
+          }
           onSave={handleSave}
         />
         <Dashboard
           logs={logs}
           testRuns={testRuns}
           onRerun={(id: number) =>
-            runTest(`ws://localhost:5064/api/tests/${id}/compiled/run`)
+            runTest(`http://localhost:5064/api/tests/${id}/compiled/run`)
           }
         />
         <Toaster />

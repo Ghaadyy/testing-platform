@@ -45,7 +45,7 @@ public static class Parser
         return sb.ToString();
     }
 
-    public static string wrapWithSockets(string code, int userId, string fileName)
+    public static string WrapWithSockets(string code, Guid processId)
     {
         StringBuilder sb = new();
 
@@ -67,7 +67,7 @@ public static class Parser
         }}
 
         async function beforeHook() {{
-            socket = new WebSocket('ws://localhost:5064/ws/selenium?fileName={fileName}&userId={userId}');
+            socket = new WebSocket('ws://localhost:5064/ws/selenium?processId={processId}');
             socket.onopen = async function () {{
                 console.log('open');
             }};
@@ -86,30 +86,25 @@ public static class Parser
             socket.close()
         }}
 
-         async function afterEachAssertHook(message, passed, test) {{
+        async function afterEachAssertHook(message, passed, test) {{
             sendAssert(socket, {{
-                test,
+                testName: test,
                 message,
-                passed,
-                type: 1
+                passed
             }});
         }}
 
-         async function beforeEachHook() {{
+        async function beforeEachHook() {{
             sendAssert(socket, {{
-                test: this.currentTest.title,
-                message: null,
-                passed: null,
-                type: 0
+                testName: this.currentTest.title,
+                status: 0
             }});
         }}
         
         async function afterEachHook() {{
             sendAssert(socket, {{
-                test: this.currentTest.title,
-                message: null,
-                passed: this.currentTest.state === 'passed',
-                type: 2
+                testName: this.currentTest.title,
+                status: 1
             }});
 
             await sleep(2000);

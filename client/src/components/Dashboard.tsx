@@ -10,7 +10,7 @@ import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import { TestRun } from "@/models/TestRun";
 import TestRunTable from "./TestRunTable";
-import TestLogs, { TestLogGroup } from "./TestLogs";
+import TestLogs from "./TestLogs";
 import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
@@ -21,9 +21,10 @@ import { toast } from "@/shadcn/hooks/use-toast";
 import { TestFile } from "@/models/TestFile";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
+import { LogGroup } from "@/models/Log";
 
 type Props = {
-  logs: TestLogGroup[];
+  logs: LogGroup[];
   onRerun: (id: number) => void;
   testRuns: TestRun[];
 };
