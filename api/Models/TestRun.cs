@@ -20,6 +20,9 @@ public record TestRun
     [Column("compiled_code")]
     public required string CompiledCode { get; set; }
 
+    [Column("raw_code")]
+    public required string RawCode { get; set; }
+
     [Column("duration")]
     public required long Duration { get; set; }
 

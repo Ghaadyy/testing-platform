@@ -1,3 +1,5 @@
+using RestrictedNL.Models.Logs;
+
 namespace RestrictedNL.Models;
 
 public interface ITestsRepository
@@ -9,5 +11,6 @@ public interface ITestsRepository
     Task UpdateTestFile(TestFile file, string content);
     TestRun? GetTestRun(Guid runId);
     List<TestRun> GetTestRuns(int fileId);
+    List<LogGroup> GetLogs(Guid runId);
     Task UploadTestRun(TestRun testRun);
 }

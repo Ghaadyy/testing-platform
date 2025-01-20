@@ -18,6 +18,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -26,7 +27,7 @@ import {
 } from "@/shadcn/components/ui/sidebar";
 import { useContext, useState } from "react";
 import { toast } from "@/shadcn/hooks/use-toast";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useTheme } from "@/shadcn/components/theme-provider";
 import { NavUser } from "./NavUser";
 import { UserContext } from "@/context/UserContext";
@@ -67,15 +68,20 @@ function HomeSideBar({ children }: HomeSideBarProps) {
     <SidebarProvider>
       <Sidebar>
         <SidebarContent>
+          <SidebarHeader className="justify-center p-4">
+            <Link to="/">
+              <h1 className="font-bold">Home</h1>
+            </Link>
+          </SidebarHeader>
           <SidebarGroup>
-            <SidebarGroupLabel>Automated UI Testing</SidebarGroupLabel>
+            <SidebarGroupLabel>Manage your tests</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <Dialog>
                     <DialogTrigger asChild className="w-full">
                       <SidebarMenuButton>
-                        <FilePlusIcon /> New File
+                        <FilePlusIcon /> Create test
                       </SidebarMenuButton>
                     </DialogTrigger>
                     <DialogContent>

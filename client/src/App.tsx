@@ -11,6 +11,8 @@ import LoginScreen from "./screens/LoginScreen";
 import SignUpScreen from "./screens/SignUpScreen";
 import { jwtDecode } from "jwt-decode";
 import RootLayout from "./layouts/RootLayout";
+import RunsScreen from "./screens/RunsScreen";
+import ViewRunScreen from "./screens/ViewRunScreen";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -55,7 +57,15 @@ function App() {
     {
       path: "/",
       element: <RootLayout />,
-      children: [{ path: "", element: authorize(<HomeScreen />) }],
+      children: [
+        { path: "tests/:testId/runs", element: authorize(<RunsScreen />) },
+
+        { path: "", element: authorize(<HomeScreen />) },
+      ],
+    },
+    {
+      path: "/runs/:runId",
+      element: authorize(<ViewRunScreen />),
     },
     { path: "/auth/login", element: anonymous(<LoginScreen />) },
     { path: "/auth/signup", element: anonymous(<SignUpScreen />) },

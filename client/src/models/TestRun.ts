@@ -1,8 +1,8 @@
 export type TestRun = {
   id: number;
-  name: string;
   ranAt: string;
   compiledCode: string;
+  rawCode: string;
   duration: bigint;
   passed: boolean;
 };
