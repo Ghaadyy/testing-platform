@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RestrictedNL.Models;
+using RestrictedNL.Models.Logs;
 using RestrictedNL.Models.User;
 
 namespace RestrictedNL.Context;
@@ -10,4 +11,6 @@ public class TestContext(DbContextOptions options) : DbContext(options)
     public DbSet<TestFile> TestFiles { get; set; }
     public DbSet<TestRun> TestRuns { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Assertion> Assertions { get; set; }
+    public DbSet<LogGroup> LogGroups { get; set; }
 }

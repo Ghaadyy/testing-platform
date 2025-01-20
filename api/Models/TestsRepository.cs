@@ -17,11 +17,11 @@ public class TestsRepository(TestContext context) : ITestsRepository
         await context.SaveChangesAsync();
     }
 
-    public TestRun? GetTestRun(int runId)
+    public TestRun? GetTestRun(Guid runId)
         => context.TestRuns.Where(test => test.Id == runId).FirstOrDefault();
 
-    public List<TestRun> GetTestRuns(string fileName)
-        => context.TestRuns.Where(test => test.Name == fileName).ToList();
+    public List<TestRun> GetTestRuns(int fileId)
+        => context.TestRuns.Where(test => test.FileId == fileId).ToList();
 
     public async Task UpdateTestFile(TestFile file, string content)
     {

@@ -1,29 +1,26 @@
 import { ChevronRight, CircleCheck, CircleX, LoaderCircle } from "lucide-react";
-import { Log, LogType } from "@/models/Log";
+import { LogGroup, LogStatus } from "@/models/Log";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/shadcn/components/ui/collapsible";
 
-type Props = { logs: TestLogGroup[] };
-
-export type TestLogGroup = {
-  Assertions: Log[];
-  Test: Log;
-};
+type Props = { logs: LogGroup[] };
 
 function TestLogs({ logs }: Props) {
   return (
     <div className="flex flex-col gap-3">
-      {logs.map(({ Test, Assertions }) => (
-        <TestDropdown key={Test.Test} test={Test} asserts={Assertions} />
+      {logs.map((group) => (
+        <TestDropdown key={group.TestName} logGroup={group} />
       ))}
     </div>
   );
 }
 
-function TestDropdown({ test, asserts }: { test: Log; asserts: Log[] }) {
+function TestDropdown({ logGroup }: { logGroup: LogGroup }) {
+  const { TestName, Assertions, Status } = logGroup;
+
   return (
     <Collapsible defaultOpen className="group/collapsible">
       <CollapsibleTrigger
@@ -35,18 +32,18 @@ function TestDropdown({ test, asserts }: { test: Log; asserts: Log[] }) {
             size={20}
             className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
           />
-          {test.Type !== LogType.AFTER_EACH_MESSAGE ? (
+          {Status === LogStatus.LOADING ? (
             <LoaderCircle className="animate-spin" />
-          ) : test.Passed ? (
+          ) : Assertions.every((a) => a.Passed) ? (
             <CircleCheck color="green" />
           ) : (
             <CircleX color="red" />
           )}
-          <p>{test.Test}</p>
+          <p>{TestName}</p>
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        {asserts.map((log, index) => {
+        {Assertions.map((log, index) => {
           return (
             <div key={index} className="flex items-center gap-2 py-3">
               {log.Passed ? (

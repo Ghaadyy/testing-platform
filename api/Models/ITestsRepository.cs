@@ -7,7 +7,7 @@ public interface ITestsRepository
     Task DeleteTestFile(TestFile file);
     Task UploadTestFile(int userId, string fileName, string content);
     Task UpdateTestFile(TestFile file, string content);
-    TestRun? GetTestRun(int runId);
-    List<TestRun> GetTestRuns(string fileName);
+    TestRun? GetTestRun(Guid runId);
+    List<TestRun> GetTestRuns(int fileId);
     Task UploadTestRun(TestRun testRun);
 }

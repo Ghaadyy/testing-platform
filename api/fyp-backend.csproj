@@ -15,15 +15,22 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Controllers\" />
-		<Folder Include="Models\" />
-		<Folder Include="Models\User" />
-		<Folder Include="Models\Token" />
+    <Folder Include="Controllers\" />
+    <Folder Include="Models\" />
+    <Folder Include="Models\User" />
+    <Folder Include="Models\Token" />
+    <Folder Include="Models\Logs" />
+    <Folder Include="Models\Redis" />
     <Folder Include="Compiler\" />
 	</ItemGroup>
 </Project>

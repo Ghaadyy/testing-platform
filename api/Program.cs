@@ -6,6 +6,7 @@ using RestrictedNL.Context;
 using RestrictedNL.Middlewares;
 using RestrictedNL.Models;
 using RestrictedNL.Models.Token;
+using RestrictedNL.Models.Redis;
 using RestrictedNL.Models.User;
 using RestrictedNL.Services;
 
@@ -22,6 +23,9 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddScoped<ITestsRepository, TestsRepository>();
 builder.Services.AddSingleton<SocketsRepository>();
 builder.Services.AddScoped<TestExecutionService>();
+builder.Services.AddScoped<RedisLogsRepository>();
+builder.Services.AddScoped<RedisProcessRepository>();
+builder.Services.AddSingleton<HttpRepository>();
 
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 builder.Services.AddScoped<TokenGenerator>();
@@ -31,6 +35,12 @@ builder.Services.AddDbContext<TestContext>(options =>
 {
     options.UseNpgsql(builder.Configuration["ConnectionStrings:DB"]);
 });
+
+builder.Services.AddStackExchangeRedisCache(options =>
+ {
+     options.Configuration = builder.Configuration["ConnectionStrings:Redis"];
+     options.InstanceName = "SampleInstance";
+ });
 
 // Configure authentication & JWT
 builder.Services

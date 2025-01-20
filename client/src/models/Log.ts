@@ -1,12 +1,16 @@
-export type Log = {
-  Test: string;
-  Message: string | null;
-  Passed: boolean | null;
-  Type: LogType;
+export type Assertion = {
+  TestName: string;
+  Message: string;
+  Passed: boolean;
 };
 
-export enum LogType {
-  BEFORE_EACH_MESSAGE = 0,
-  AFTER_EACH_ASSERT_MESSAGE = 1,
-  AFTER_EACH_MESSAGE = 2,
+export enum LogStatus {
+  LOADING = 0,
+  FINISHED = 1,
 }
+
+export type LogGroup = {
+  TestName: string;
+  Status: LogStatus;
+  Assertions: Assertion[];
+};
