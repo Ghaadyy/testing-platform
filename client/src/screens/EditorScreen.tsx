@@ -11,7 +11,6 @@ import { generateCode } from "@/utils/generateCode";
 import { Test } from "@/models/Statement";
 import { parseCode } from "@/utils/parseCode";
 import { UserContext } from "@/context/UserContext";
-import { TestRun } from "@/models/TestRun";
 import { API_URL } from "@/main";
 import { LogGroup } from "@/models/Log";
 
@@ -27,7 +26,6 @@ function EditorScreen() {
   const [code, setCode] = useState<string>("");
   const [isCode, setIsCode] = useState<boolean>(true);
   const [tests, setTests] = useState<Test[]>([]);
-  const [testRuns, setTestRuns] = useState<TestRun[]>([]);
 
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
@@ -124,20 +122,6 @@ function EditorScreen() {
     [code, isCode, saveDocument, tests, toast]
   );
 
-  async function getTestRuns(fileName: string, token: string) {
-    try {
-      const res = await fetch(`${API_URL}/api/tests/${fileName}/runs`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const testRuns: TestRun[] = await res.json();
-      setTestRuns(testRuns);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
   const reconnect = (fileName: string) => {
     console.log("Reconnecting...");
 
@@ -194,13 +178,6 @@ function EditorScreen() {
     }
   };
 
-  // Fetch test runs
-  useEffect(() => {
-    if (fileName && token) {
-      getTestRuns(fileName, token);
-    }
-  }, [fileName, token]);
-
   // Handle save input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -251,13 +228,7 @@ function EditorScreen() {
           }
           onSave={handleSave}
         />
-        <Dashboard
-          logs={logs}
-          testRuns={testRuns}
-          onRerun={(id: number) =>
-            runTest(`http://localhost:5064/api/tests/${id}/compiled/run`)
-          }
-        />
+        <Dashboard logs={logs} />
         <Toaster />
       </div>
     </MainContext.Provider>

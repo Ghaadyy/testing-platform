@@ -1,7 +1,13 @@
 import { TestFile } from "@/models/TestFile";
 import { DataTable } from "./DataTable";
 import { ColumnDef, Column } from "@tanstack/react-table";
-import { ArrowUpDown, CopyIcon, EditIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowUpDown,
+  CopyIcon,
+  EditIcon,
+  TrashIcon,
+  Workflow,
+} from "lucide-react";
 import { Button } from "@/shadcn/components/ui/button";
 import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -37,6 +43,7 @@ const sortHeader = (name: string) => {
   return ({ column }: { column: Column<TestFile, unknown> }) => (
     <Button
       variant="ghost"
+      className="p-0 hover:bg-transparent"
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >
       {name}
@@ -45,7 +52,7 @@ const sortHeader = (name: string) => {
   );
 };
 
-function Actions({ onDelete }: { onDelete: () => void }) {
+function Actions({ file, onDelete }: { file: TestFile; onDelete: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -57,6 +64,11 @@ function Actions({ onDelete }: { onDelete: () => void }) {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <Link to={`/tests/${file.name}/runs`}>
+          <DropdownMenuItem>
+            <Workflow /> View previous runs
+          </DropdownMenuItem>
+        </Link>
         <DropdownMenuItem disabled>
           <CopyIcon /> Copy
         </DropdownMenuItem>
@@ -115,6 +127,7 @@ function Files() {
 
         return (
           <Actions
+            file={file}
             onDelete={() =>
               deleteFile(file.name, token!, () =>
                 setTests((prev) => prev.filter((t) => t.name !== file.name))
@@ -138,6 +151,7 @@ function Files() {
         createdAt: new Date(file.createdAt).toLocaleString(),
         updatedAt: new Date(file.updatedAt).toLocaleString(),
       }))}
+      key="name"
     />
   );
 }

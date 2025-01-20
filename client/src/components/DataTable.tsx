@@ -45,11 +45,13 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  key: string;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  key,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -78,14 +80,14 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col gap-4 py-4">
       <div className="flex items-center">
-        {/* <Input
+        <Input
           placeholder="Filter..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn(key)?.getFilterValue() as string) ?? ""}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn(key)?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
-        /> */}
+        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

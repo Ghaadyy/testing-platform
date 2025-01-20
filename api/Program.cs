@@ -21,7 +21,6 @@ builder.Services.AddCors();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddScoped<ITestsRepository, TestsRepository>();
-builder.Services.AddSingleton<SocketsRepository>();
 builder.Services.AddScoped<TestExecutionService>();
 builder.Services.AddScoped<RedisLogsRepository>();
 builder.Services.AddScoped<RedisProcessRepository>();

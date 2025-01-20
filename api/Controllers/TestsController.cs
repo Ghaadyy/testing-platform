@@ -250,11 +250,18 @@ public class TestsController(
             return NotFound("Run not found");
         }
 
+        var testFile = testsRepository.GetTestFile(testRun.FileId.ToString(), (int)userId);
+
+        if (testFile is null)
+        {
+            return NotFound("Test file not found for this run");
+        }
+
         SetSEEHeaders(Response);
 
         httpRepository.Add((int)userId, testRun.FileId.ToString(), Response);
 
-        await testExecutionService.RunCompiledTestAsync((int)userId, testRun, rawToken);
+        await testExecutionService.RunCompiledTestAsync((int)userId, testRun, testFile.Content, rawToken);
 
         httpRepository.Remove((int)userId, testRun.FileId.ToString());
 

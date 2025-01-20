@@ -41,16 +41,16 @@ public class TestExecutionService(
 
         await httpRepository.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
 
-        await HandleTestExecutionAsync(testFile.Id.ToString(), testFile.UserId, code, token);
+        await HandleTestExecutionAsync(testFile.Id.ToString(), testFile.UserId, code, testFile.Content, token);
     }
 
-    public async Task RunCompiledTestAsync(int userId, TestRun testRun, string token)
+    public async Task RunCompiledTestAsync(int userId, TestRun testRun, string rawCode, string token)
     {
         string seleniumCode = testRun.CompiledCode;
-        await HandleTestExecutionAsync(testRun.FileId.ToString(), userId, seleniumCode, token);
+        await HandleTestExecutionAsync(testRun.FileId.ToString(), userId, seleniumCode, rawCode, token);
     }
 
-    private async Task HandleTestExecutionAsync(string fileId, int userId, string seleniumCode, string token)
+    private async Task HandleTestExecutionAsync(string fileId, int userId, string seleniumCode, string rawCode, string token)
     {
         string tempFilePath = Path.GetTempFileName() + ".js";
 
@@ -78,6 +78,7 @@ public class TestExecutionService(
             RanAt = DateTime.UtcNow,
             Duration = Duration,
             CompiledCode = seleniumCode,
+            RawCode = rawCode
         });
 
         await _logsRepo.Save(key, runId);

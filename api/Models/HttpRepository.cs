@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using RestrictedNL.Models.Redis;
 using RestrictedNL.Models.Logs;
 
@@ -43,6 +44,9 @@ public class HttpRepository
             {
                 message,
                 status
+            }, new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
 
             var data = $"data: {sseObject}\n\n";

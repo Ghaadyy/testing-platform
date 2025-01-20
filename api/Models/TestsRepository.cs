@@ -1,5 +1,6 @@
 
 using RestrictedNL.Context;
+using RestrictedNL.Models.Logs;
 
 namespace RestrictedNL.Models;
 
@@ -43,6 +44,22 @@ public class TestsRepository(TestContext context) : ITestsRepository
         });
 
         await context.SaveChangesAsync();
+    }
+
+    public List<LogGroup> GetLogs(Guid runId)
+    {
+        var groups = context.LogGroups.Where(g => g.RunId == runId).ToList();
+
+        foreach (var group in groups)
+        {
+            var assertions = context.Assertions
+            .Where(a => a.RunId == runId && a.TestName == group.TestName)
+            .ToList();
+
+            group.Assertions = assertions;
+        }
+
+        return groups;
     }
 
     public async Task UploadTestRun(TestRun testRun)

@@ -8,8 +8,6 @@ import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 import Editor from "@monaco-editor/react";
 import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
-import { TestRun } from "@/models/TestRun";
-import TestRunTable from "./TestRunTable";
 import TestLogs from "./TestLogs";
 import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
@@ -22,11 +20,10 @@ import { TestFile } from "@/models/TestFile";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { LogGroup } from "@/models/Log";
+import { Card } from "@/shadcn/components/ui/card";
 
 type Props = {
   logs: LogGroup[];
-  onRerun: (id: number) => void;
-  testRuns: TestRun[];
 };
 
 async function openDocument(
@@ -53,7 +50,7 @@ async function openDocument(
   }
 }
 
-function Dashboard({ logs, onRerun, testRuns }: Props) {
+function Dashboard({ logs }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
     useContext(MainContext);
   const { token } = useContext(UserContext);
@@ -94,11 +91,8 @@ function Dashboard({ logs, onRerun, testRuns }: Props) {
   }, [fileName, setCode, setTests, token]);
 
   return (
-    <ResizablePanelGroup
-      direction="horizontal"
-      className="h-full w-full rounded-lg"
-    >
-      <ResizablePanel className="flex flex-col gap-3 px-3">
+    <ResizablePanelGroup direction="vertical">
+      <ResizablePanel className="flex flex-col gap-3 py-3" defaultSize={80}>
         <div className="flex flex-row gap-3 items-center">
           <Switch
             id="code-toggle"
@@ -130,28 +124,82 @@ function Dashboard({ logs, onRerun, testRuns }: Props) {
         )}
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={50}>
-        <ResizablePanelGroup direction="vertical">
-          <ResizablePanel className="flex flex-col gap-3 p-3" defaultSize={60}>
-            <TestRunTable testRuns={testRuns} onRerun={onRerun} />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
-            <h1 className="font-bold text-2xl">Logs</h1>
-            <ScrollArea>
-              {Object.keys(logs).length === 0 ? (
-                <p>There are no tests running yet. Try running a test first!</p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <TestLogs logs={logs} />
-                </div>
-              )}
-            </ScrollArea>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+      <ResizablePanel defaultSize={20} className="py-3">
+        <Card className="p-4 flex flex-col gap-3">
+          <h1 className="font-bold text-2xl">Logs</h1>
+          <ScrollArea>
+            {Object.keys(logs).length === 0 ? (
+              <p>There are no tests running yet. Try running a test first!</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <TestLogs logs={logs} />
+              </div>
+            )}
+          </ScrollArea>
+        </Card>
       </ResizablePanel>
     </ResizablePanelGroup>
   );
+
+  // return (
+  //   <ResizablePanelGroup
+  //     direction="horizontal"
+  //     className="h-full w-full rounded-lg"
+  //   >
+  //     <ResizablePanel className="flex flex-col gap-3 px-3">
+  //       <div className="flex flex-row gap-3 items-center">
+  //         <Switch
+  //           id="code-toggle"
+  //           checked={isCode}
+  //           onCheckedChange={handleEditorSwitch}
+  //         />
+  //         <Label htmlFor="code-toggle">
+  //           {isCode ? "Use visual editor" : "Use code editor"}
+  //         </Label>
+  //       </div>
+  //       {isCode ? (
+  //         <Editor
+  //           height="100%"
+  //           options={{
+  //             minimap: {
+  //               enabled: false,
+  //             },
+  //             fontSize: 14,
+  //           }}
+  //           language={"rnl"}
+  //           className="editor-wrapper"
+  //           theme={"rnl-theme"}
+  //           value={code}
+  //           onChange={(c) => setCode(c ?? "")}
+  //           beforeMount={setupEditor}
+  //         />
+  //       ) : (
+  //         <TestCreator statementId={statementId} />
+  //       )}
+  //     </ResizablePanel>
+  //     <ResizableHandle withHandle />
+  //     <ResizablePanel defaultSize={50}>
+  //       <ResizablePanelGroup direction="vertical">
+  //         <ResizablePanel className="flex flex-col gap-3 p-3" defaultSize={60}>
+  //           <TestRunTable testRuns={testRuns} onRerun={onRerun} />
+  //         </ResizablePanel>
+  //         <ResizableHandle withHandle />
+  //         <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
+  //           <h1 className="font-bold text-2xl">Logs</h1>
+  //           <ScrollArea>
+  //             {Object.keys(logs).length === 0 ? (
+  //               <p>There are no tests running yet. Try running a test first!</p>
+  //             ) : (
+  //               <div className="flex flex-col gap-3">
+  //                 <TestLogs logs={logs} />
+  //               </div>
+  //             )}
+  //           </ScrollArea>
+  //         </ResizablePanel>
+  //       </ResizablePanelGroup>
+  //     </ResizablePanel>
+  //   </ResizablePanelGroup>
+  // );
 }
 
 export default Dashboard;
