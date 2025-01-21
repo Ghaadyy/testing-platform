@@ -2,9 +2,8 @@ import { TestRun } from "@/models/TestRun";
 import { Button } from "@/shadcn/components/ui/button";
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 import { DataTable } from "./DataTable";
-import { Column, ColumnDef } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import {
-  ArrowUpDown,
   Binoculars,
   CircleCheck,
   CircleX,
@@ -20,21 +19,9 @@ import {
   DropdownMenuTrigger,
 } from "@/shadcn/components/ui/dropdown-menu";
 import { useNavigate } from "react-router";
+import { sortHeader } from "@/utils/sortHeader";
 
 type Props = { testRuns: TestRun[]; onRerun: (run: TestRun) => void };
-
-const sortHeader = (name: string) => {
-  return ({ column }: { column: Column<TestRun, unknown> }) => (
-    <Button
-      variant="ghost"
-      className="p-0 hover:bg-transparent"
-      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    >
-      {name}
-      <ArrowUpDown className="ml-2 h-4 w-4" />
-    </Button>
-  );
-};
 
 function TestRunTable({ testRuns, onRerun }: Props) {
   const navigate = useNavigate();

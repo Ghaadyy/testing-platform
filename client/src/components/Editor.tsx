@@ -3,8 +3,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/shadcn/components/ui/resizable";
-import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
-
 import { Editor as MonacoEditor } from "@monaco-editor/react";
 import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
@@ -22,9 +20,7 @@ import { API_URL } from "@/main";
 import { LogGroup } from "@/models/Log";
 import { Card } from "@/shadcn/components/ui/card";
 
-type Props = {
-  logs: LogGroup[];
-};
+type Props = { logs: LogGroup[] };
 
 async function openDocument(
   fileId: string,
@@ -125,17 +121,9 @@ function Editor({ logs }: Props) {
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={20} className="py-3">
-        <Card className="p-4 flex flex-col gap-3">
+        <Card className="p-4 flex flex-col gap-3 h-full w-full">
           <h1 className="font-bold text-2xl">Logs</h1>
-          <ScrollArea>
-            {Object.keys(logs).length === 0 ? (
-              <p>There are no tests running yet. Try running a test first!</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <TestLogs logs={logs} />
-              </div>
-            )}
-          </ScrollArea>
+          <TestLogs logs={logs} />
         </Card>
       </ResizablePanel>
     </ResizablePanelGroup>
