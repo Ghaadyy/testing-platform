@@ -37,9 +37,9 @@
     <Folder Include="Repository\" />
     <Folder Include="Repository\Test" />
     <Folder Include="Repository\User" />
-    <Folder Include="Repository\Http" />
 
     <Folder Include="Services\" />
+    <Folder Include="Services\Http" />
     <Folder Include="Services\Redis" />
     <Folder Include="Services\Token" />
     <Folder Include="Services\Test" />
