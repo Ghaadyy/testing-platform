@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestrictedNL.Models;
-using RestrictedNL.Models.Token;
+using RestrictedNL.Models.Test;
+using RestrictedNL.Repository.Test;
+using RestrictedNL.Services.Token;
 
 namespace RestrictedNL.Controllers;
 
@@ -9,27 +10,27 @@ namespace RestrictedNL.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 public class RunsController(
-    ITestsRepository testsRepository,
-    ITokenRepository tokenRepository
+    ITestRepository testRepository,
+    ITokenService tokenService
     ) : ControllerBase
 {
 
     [HttpGet("{runId}/logs")]
     public ActionResult<List<TestRun>> GetRunLogs(Guid runId)
     {
-        var userId = tokenRepository.GetId(User);
+        var userId = tokenService.GetId(User);
         if (userId == null)
         {
             return Unauthorized("User is not authorized");
         }
 
-        var testRun = testsRepository.GetTestRun(runId);
+        var testRun = testRepository.GetTestRun(runId);
         if (testRun is null)
         {
             return NotFound("Could not find test run");
         }
 
-        var logs = testsRepository.GetLogs(runId);
+        var logs = testRepository.GetLogs(runId);
 
         return Ok(logs);
     }

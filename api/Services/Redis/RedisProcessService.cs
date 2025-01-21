@@ -2,9 +2,9 @@ using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using RestrictedNL.Models.Logs;
 
-namespace RestrictedNL.Models.Redis;
+namespace RestrictedNL.Services.Redis;
 
-public class RedisProcessRepository(IDistributedCache cache)
+public class RedisProcessService(IDistributedCache cache)
 {
     private readonly IDistributedCache _cache = cache;
     private static string GetKey(Guid processId) => $"Process_{processId}";

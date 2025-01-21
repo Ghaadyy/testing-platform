@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿namespace RestrictedNL.Repository.User;
 
-namespace RestrictedNL.Models.User;
+using Microsoft.AspNetCore.JsonPatch;
+using RestrictedNL.Models.User;
 
 public interface IUserRepository
 {

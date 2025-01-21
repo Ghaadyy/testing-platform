@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
-using RestrictedNL.Context;
+﻿namespace RestrictedNL.Repository.User;
 
-namespace RestrictedNL.Models.User;
+using Microsoft.AspNetCore.JsonPatch;
+using RestrictedNL.Context;
+using RestrictedNL.Models.User;
 
 public class UserRepository(TestContext context) : IUserRepository
 {

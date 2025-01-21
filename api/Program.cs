@@ -4,11 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RestrictedNL.Context;
 using RestrictedNL.Middlewares;
-using RestrictedNL.Models;
-using RestrictedNL.Models.Token;
-using RestrictedNL.Models.Redis;
-using RestrictedNL.Models.User;
-using RestrictedNL.Services;
+using RestrictedNL.Services.Redis;
+using RestrictedNL.Repository.Test;
+using RestrictedNL.Services.Token;
+using RestrictedNL.Repository.User;
+using RestrictedNL.Services.Http;
+using RestrictedNL.Services.Test;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,15 +21,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
-builder.Services.AddScoped<ITestsRepository, TestsRepository>();
-builder.Services.AddScoped<TestExecutionService>();
-builder.Services.AddScoped<RedisLogsRepository>();
-builder.Services.AddScoped<RedisProcessRepository>();
-builder.Services.AddSingleton<HttpRepository>();
 
-builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-builder.Services.AddScoped<TokenGenerator>();
+// Register repositories
+builder.Services.AddScoped<ITestRepository, TestRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Register services
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<TestExecutionService>();
+builder.Services.AddScoped<RedisLogService>();
+builder.Services.AddScoped<RedisProcessService>();
+builder.Services.AddSingleton<HttpService>();
 
 builder.Services.AddDbContext<TestContext>(options =>
 {

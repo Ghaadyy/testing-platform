@@ -2,10 +2,11 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using RestrictedNL.Models.User;
 
-namespace RestrictedNL.Models.Token;
+namespace RestrictedNL.Services.Token;
 
-public class TokenRepository(IConfiguration configuration) : ITokenRepository
+public class TokenService(IConfiguration configuration) : ITokenService
 {
     public int? GetId(ClaimsPrincipal claim)
     {
@@ -17,6 +18,26 @@ public class TokenRepository(IConfiguration configuration) : ITokenRepository
         }
 
         return null;
+    }
+
+    public string GenerateToken(User user)
+    {
+        List<Claim> claims = [
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+        ];
+
+        var jwtToken = new JwtSecurityToken(
+            claims: claims,
+            notBefore: DateTime.UtcNow,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: new SigningCredentials(
+                new SymmetricSecurityKey(
+                   Encoding.UTF8.GetBytes(configuration["JWT:Secret"]!)
+                ),
+                "HS256")
+            );
+
+        return new JwtSecurityTokenHandler().WriteToken(jwtToken);
     }
 
     public ClaimsPrincipal? ParseToken(string token)

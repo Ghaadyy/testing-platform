@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using RestrictedNL.Models.Token;
 using RestrictedNL.Models.User;
+using RestrictedNL.Services.Token;
+using RestrictedNL.Repository.User;
 
 namespace RestrictedNL.Controllers;
 
@@ -10,9 +12,8 @@ namespace RestrictedNL.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 public class UsersController(
-    TokenGenerator generator,
-    IUserRepository userRepository,
-    ITokenRepository tokenRepository
+    ITokenService tokenService,
+    IUserRepository userRepository
     ) : ControllerBase
 {
     [HttpGet]
@@ -33,7 +34,7 @@ public class UsersController(
     [HttpGet("me")]
     public ActionResult<User> GetUserInfo()
     {
-        int? userId = tokenRepository.GetId(User);
+        int? userId = tokenService.GetId(User);
         if (userId is null) return BadRequest("User ID missing from token");
 
         User? user = userRepository.GetUserById(userId.Value);
@@ -52,7 +53,7 @@ public class UsersController(
         if (!BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
             return NotFound("Invalid password.");
 
-        var token = generator.GenerateToken(user);
+        var token = tokenService.GenerateToken(user);
 
         return Ok(new TokenReponse(token, user));
     }
@@ -80,7 +81,7 @@ public class UsersController(
 
         await userRepository.AddUser(user);
 
-        var token = generator.GenerateToken(user);
+        var token = tokenService.GenerateToken(user);
 
         return Ok(new TokenReponse(token, user));
     }
@@ -111,7 +112,7 @@ public class UsersController(
     [Authorize]
     public async Task<ActionResult<User>> Update([FromBody] JsonPatchDocument<User> patchDoc)
     {
-        int? userId = tokenRepository.GetId(User);
+        int? userId = tokenService.GetId(User);
         if (userId is null) return BadRequest("User ID missing from token");
 
         User? user = userRepository.GetUserById((int)userId);
