@@ -1,17 +1,19 @@
 using System.Diagnostics;
 using RestrictedNL.Compiler;
-using RestrictedNL.Models;
 using RestrictedNL.Models.Logs;
-using RestrictedNL.Models.Redis;
+using RestrictedNL.Models.Test;
+using RestrictedNL.Services.Http;
+using RestrictedNL.Repository.Test;
+using RestrictedNL.Services.Redis;
 
-namespace RestrictedNL.Services;
+namespace RestrictedNL.Services.Test;
 
 public class TestExecutionService(
-    ITestsRepository testsRepository,
-    HttpRepository httpRepository,
+    ITestRepository testRepository,
+    HttpService httpService,
     IConfiguration configuration,
-    RedisProcessRepository processRepository,
-    RedisLogsRepository _logsRepo
+    RedisProcessService processService,
+    RedisLogService logService
     )
 {
     public async Task RunTestAsync(TestFile testFile, string token)
@@ -35,11 +37,11 @@ public class TestExecutionService(
                     Passed = false
                 });
 
-            await httpRepository.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
+            await httpService.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
             return;
         }
 
-        await httpRepository.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
+        await httpService.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
 
         await HandleTestExecutionAsync(testFile.Id.ToString(), testFile.UserId, code, testFile.Content, token);
     }
@@ -67,10 +69,10 @@ public class TestExecutionService(
         var (Success, Duration) = await RunTestProcessAsync(processId, userId, fileId, tempFilePath);
         var key = new LogKey(userId, fileId);
         //Send close message for user to gracefully stop
-        await httpRepository.SendSseMessage(userId, fileId, [], "close");
+        await httpService.SendSseMessage(userId, fileId, [], "close");
 
         Guid runId = Guid.NewGuid();
-        await testsRepository.UploadTestRun(new TestRun
+        await testRepository.UploadTestRun(new TestRun
         {
             Id = runId,
             FileId = int.Parse(fileId),
@@ -81,14 +83,14 @@ public class TestExecutionService(
             RawCode = rawCode
         });
 
-        await _logsRepo.Save(key, runId);
-        await _logsRepo.Remove(key);
+        await logService.Save(key, runId);
+        await logService.Remove(key);
     }
 
     private async Task<(bool Success, long Duration)> RunTestProcessAsync(Guid processId, int userId, string fileId, string tempFilePath)
     {
         //Add process to repo
-        await processRepository.Add(processId, userId, fileId);
+        await processService.Add(processId, userId, fileId);
 
         Stopwatch stopwatch = new();
 
@@ -106,7 +108,7 @@ public class TestExecutionService(
         if (npmProc is null)
         {
             File.Delete(tempFilePath);
-            await httpRepository.SendSseMessage(userId, fileId, [new LogGroup
+            await httpService.SendSseMessage(userId, fileId, [new LogGroup
             {
                 TestName = "Failed to start npm process for dependency installation",
                 Status = LogStatus.FINISHED,
@@ -129,7 +131,7 @@ public class TestExecutionService(
         {
             File.Delete(tempFilePath);
             stopwatch.Stop();
-            await httpRepository.SendSseMessage(userId, fileId, [new LogGroup
+            await httpService.SendSseMessage(userId, fileId, [new LogGroup
             {
                 TestName = "Failed to start process",
                 Status = LogStatus.FINISHED
@@ -144,7 +146,7 @@ public class TestExecutionService(
 
         if (process.ExitCode != 0)
         {
-            await httpRepository.SendSseMessage(userId, fileId, [new LogGroup
+            await httpService.SendSseMessage(userId, fileId, [new LogGroup
             {
                 TestName = $"Process terminated unexpectedly with exit code {process.ExitCode}",
                 Status = LogStatus.FINISHED

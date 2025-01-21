@@ -1,8 +1,9 @@
+namespace RestrictedNL.Repository.Test;
+
 using RestrictedNL.Models.Logs;
+using RestrictedNL.Models.Test;
 
-namespace RestrictedNL.Models;
-
-public interface ITestsRepository
+public interface ITestRepository
 {
     List<TestFile> GetTestFiles(int userId);
     TestFile? GetTestFile(string fileName, int userId);

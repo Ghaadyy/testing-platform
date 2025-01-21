@@ -1,7 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestrictedNL.Models;
+namespace RestrictedNL.Models.Test;
+
+public record TestFileDTO
+{
+    public required string FileName;
+    public required string Content;
+}
 
 [Table("test_files")]
 public record TestFile

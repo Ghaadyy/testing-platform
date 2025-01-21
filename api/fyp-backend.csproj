@@ -24,13 +24,26 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
-	<ItemGroup>
+  <ItemGroup>
     <Folder Include="Controllers\" />
+
     <Folder Include="Models\" />
     <Folder Include="Models\User" />
     <Folder Include="Models\Token" />
+    <Folder Include="Models\Test" />
     <Folder Include="Models\Logs" />
     <Folder Include="Models\Redis" />
+
+    <Folder Include="Repository\" />
+    <Folder Include="Repository\Test" />
+    <Folder Include="Repository\User" />
+
+    <Folder Include="Services\" />
+    <Folder Include="Services\Http" />
+    <Folder Include="Services\Redis" />
+    <Folder Include="Services\Token" />
+    <Folder Include="Services\Test" />
+
     <Folder Include="Compiler\" />
-	</ItemGroup>
+  </ItemGroup>
 </Project>

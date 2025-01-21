@@ -1,10 +1,10 @@
-using RestrictedNL.Models;
 using RestrictedNL.Models.Logs;
 using System.Net.WebSockets;
 using System.Text;
 using Newtonsoft.Json;
-using RestrictedNL.Models.Redis;
+using RestrictedNL.Services.Redis;
 using Newtonsoft.Json.Linq;
+using RestrictedNL.Services.Http;
 
 namespace RestrictedNL.Middlewares;
 
@@ -13,14 +13,14 @@ public class WebSocketMiddleware(RequestDelegate next)
     private static async Task HandleSelenium(HttpContext context)
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        var _httpRepo = context.RequestServices.GetRequiredService<HttpRepository>();
-        var _logsRepo = context.RequestServices.GetRequiredService<RedisLogsRepository>();
-        var _processRepo = context.RequestServices.GetRequiredService<RedisProcessRepository>();
+        var httpService = context.RequestServices.GetRequiredService<HttpService>();
+        var logService = context.RequestServices.GetRequiredService<RedisLogService>();
+        var processService = context.RequestServices.GetRequiredService<RedisProcessService>();
 
         if (context.WebSockets.IsWebSocketRequest)
         {
             var processId = Guid.Parse(context.Request.Query["processId"].ToString());
-            var key = await _processRepo.Get(processId);
+            var key = await processService.Get(processId);
             if (key is null)
             {
                 logger.LogInformation("Process missing from repo");
@@ -36,7 +36,7 @@ public class WebSocketMiddleware(RequestDelegate next)
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     logger.LogInformation("WebSocket connection closing...");
-                    await _processRepo.Remove(processId);
+                    await processService.Remove(processId);
 
                     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
                     logger.LogInformation("WebSocket connection closed.");
@@ -53,19 +53,19 @@ public class WebSocketMiddleware(RequestDelegate next)
                     if (obj["message"] is null)
                     {
                         logger.LogInformation("Is LogGroup");
-                        await _logsRepo.AddLogGroup(key, obj.ToObject<LogGroup>()!);
+                        await logService.AddLogGroup(key, obj.ToObject<LogGroup>()!);
                     }
                     else if (obj["message"] is not null)
                     {
                         logger.LogInformation("Is Assertion");
-                        await _logsRepo.AddAssertion(key, obj.ToObject<Assertion>()!);
+                        await logService.AddAssertion(key, obj.ToObject<Assertion>()!);
                     }
                     else
                     {
                         logger.LogInformation("Message did not match any expected types");
                     }
 
-                    await _httpRepo.SendSseMessage(key.UserId, key.FileId, await _logsRepo.Get(key));
+                    await httpService.SendSseMessage(key.UserId, key.FileId, await logService.Get(key));
                 }
             }
         }

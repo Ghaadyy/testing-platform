@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using RestrictedNL.Models;
 using RestrictedNL.Models.Logs;
+using RestrictedNL.Models.Test;
 using RestrictedNL.Models.User;
 
 namespace RestrictedNL.Context;

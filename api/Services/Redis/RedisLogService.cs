@@ -3,11 +3,11 @@ using Newtonsoft.Json;
 using RestrictedNL.Context;
 using RestrictedNL.Models.Logs;
 
-namespace RestrictedNL.Models.Redis;
+namespace RestrictedNL.Services.Redis;
 
 // The Redis cache contains data in the following format
 // LogKey => List<LogGroup>
-public class RedisLogsRepository(IDistributedCache cache, TestContext context)
+public class RedisLogService(IDistributedCache cache, TestContext context)
 {
     private readonly IDistributedCache _cache = cache;
 

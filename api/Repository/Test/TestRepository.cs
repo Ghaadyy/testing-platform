@@ -1,10 +1,10 @@
+namespace RestrictedNL.Repository.Test;
 
 using RestrictedNL.Context;
 using RestrictedNL.Models.Logs;
+using RestrictedNL.Models.Test;
 
-namespace RestrictedNL.Models;
-
-public class TestsRepository(TestContext context) : ITestsRepository
+public class TestRepository(TestContext context) : ITestRepository
 {
     public List<TestFile> GetTestFiles(int userId) =>
         [.. context.TestFiles.Where(f => f.UserId == userId)];

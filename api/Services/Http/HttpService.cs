@@ -1,12 +1,11 @@
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using RestrictedNL.Models.Redis;
 using RestrictedNL.Models.Logs;
 
-namespace RestrictedNL.Models;
+namespace RestrictedNL.Services.Http;
 
-public class HttpRepository
+public class HttpService
 {
     private readonly ConcurrentDictionary<LogKey, HttpResponse> ActiveConnections = new();
 
