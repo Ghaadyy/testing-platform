@@ -18,21 +18,17 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [authInitialized, setAuthInitialized] = useState<boolean>(false);
 
   function authorize(route: JSX.Element): JSX.Element {
-    return isAuthenticated && !loading ? (
-      route
-    ) : (
-      <Navigate replace to="/auth/login" />
-    );
+    return isAuthenticated ? route : <Navigate replace to="/auth/login" />;
   }
 
   function anonymous(route: JSX.Element): JSX.Element {
-    return isAuthenticated && !loading ? <Navigate replace to="/" /> : route;
+    return isAuthenticated ? <Navigate replace to="/" /> : route;
   }
 
-  useEffect(() => {
+  function tryLoginFromToken() {
     const token = localStorage.getItem("token");
     const userRaw = localStorage.getItem("user");
     if (token !== null && userRaw !== null) {
@@ -50,23 +46,21 @@ function App() {
         setIsAuthenticated(true);
       }
     }
-    setLoading(false);
-  }, []);
+    setAuthInitialized(true);
+  }
+
+  useEffect(() => tryLoginFromToken(), []);
 
   const router = createBrowserRouter([
     {
       path: "/",
       element: <RootLayout />,
       children: [
-        { path: "tests/:testId/runs", element: authorize(<RunsScreen />) },
-
         { path: "", element: authorize(<HomeScreen />) },
+        { path: "tests/:testId/runs", element: authorize(<RunsScreen />) },
       ],
     },
-    {
-      path: "/runs/:runId",
-      element: authorize(<ViewRunScreen />),
-    },
+    { path: "/runs/:runId", element: authorize(<ViewRunScreen />) },
     { path: "/auth/login", element: anonymous(<LoginScreen />) },
     { path: "/auth/signup", element: anonymous(<SignUpScreen />) },
     { path: "/editor/:testId", element: authorize(<EditorScreen />) },
@@ -85,7 +79,7 @@ function App() {
             setIsAuthenticated,
           }}
         >
-          <RouterProvider router={router} />
+          {authInitialized && <RouterProvider router={router} />}
         </UserContext.Provider>
       </ThemeProvider>
     </DndProvider>
