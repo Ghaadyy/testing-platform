@@ -5,7 +5,7 @@ import {
 } from "@/shadcn/components/ui/resizable";
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 
-import Editor from "@monaco-editor/react";
+import { Editor as MonacoEditor } from "@monaco-editor/react";
 import { useContext, useEffect, useState } from "react";
 import { MainContext } from "@/context/MainContext";
 import TestLogs from "./TestLogs";
@@ -50,7 +50,7 @@ async function openDocument(
   }
 }
 
-function Dashboard({ logs }: Props) {
+function Editor({ logs }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileId } =
     useContext(MainContext);
   const { token } = useContext(UserContext);
@@ -104,7 +104,7 @@ function Dashboard({ logs }: Props) {
           </Label>
         </div>
         {isCode ? (
-          <Editor
+          <MonacoEditor
             height="100%"
             options={{
               minimap: {
@@ -142,4 +142,4 @@ function Dashboard({ logs }: Props) {
   );
 }
 
-export default Dashboard;
+export default Editor;

@@ -1,4 +1,4 @@
-import Dashboard from "@/components/Dashboard";
+import Editor from "@/components/Editor";
 import { Toaster } from "@/shadcn/components/ui/toaster";
 
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -227,7 +227,7 @@ function EditorScreen() {
           onRun={() => runTest(`${API_URL}/api/tests/${fileId}/run`)}
           onSave={handleSave}
         />
-        <Dashboard logs={logs} />
+        <Editor logs={logs} />
         <Toaster />
       </div>
     </MainContext.Provider>
