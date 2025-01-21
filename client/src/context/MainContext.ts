@@ -2,8 +2,8 @@ import { Test } from "@/models/Statement";
 import { createContext, Dispatch, SetStateAction } from "react";
 
 export type MainContext = {
-  fileName: string;
-  setFileName: Dispatch<SetStateAction<string>>;
+  fileId: string;
+  setFileId: Dispatch<SetStateAction<string>>;
   code: string;
   setCode: Dispatch<SetStateAction<string>>;
   isCode: boolean;
@@ -13,8 +13,8 @@ export type MainContext = {
 };
 
 export const MainContext = createContext<MainContext>({
-  fileName: "",
-  setFileName: () => "",
+  fileId: "",
+  setFileId: () => "",
   code: "",
   setCode: () => "",
   isCode: false,

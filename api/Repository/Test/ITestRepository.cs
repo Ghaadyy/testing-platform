@@ -5,13 +5,14 @@ using RestrictedNL.Models.Test;
 
 public interface ITestRepository
 {
-    List<TestFile> GetTestFiles(int userId);
-    TestFile? GetTestFile(string fileName, int userId);
+    List<TestFile> GetTestFiles(Guid userId);
+    TestFile? GetTestFile(Guid fileId, Guid userId);
+    TestFile? GetTestFileByName(string fileName, Guid userId);
     Task DeleteTestFile(TestFile file);
-    Task UploadTestFile(int userId, string fileName, string content);
-    Task UpdateTestFile(TestFile file, string content);
+    Task<TestFile> UploadTestFile(Guid userId, string fileName, string content);
+    Task<TestFile> UpdateTestFile(TestFile file, string content);
     TestRun? GetTestRun(Guid runId);
-    List<TestRun> GetTestRuns(int fileId);
+    List<TestRun> GetTestRuns(Guid fileId);
     List<LogGroup> GetLogs(Guid runId);
     Task UploadTestRun(TestRun testRun);
 }

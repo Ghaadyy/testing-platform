@@ -32,25 +32,25 @@ public class TestsController(
         return Ok(files);
     }
 
-    [HttpGet("{fileName}")]
-    public ActionResult<TestFile> GetTestFile(string fileName)
+    [HttpGet("{fileId}")]
+    public ActionResult<TestFile> GetTestFile(Guid fileId)
     {
         var id = tokenService.GetId(User);
         if (id is null) return NotFound("Could not find user with the specified id.");
 
-        var file = testRepository.GetTestFile(fileName, id.Value);
+        var file = testRepository.GetTestFile(fileId, id.Value);
         if (file is null) return NotFound();
 
         return Ok(file);
     }
 
-    [HttpDelete("{fileName}")]
-    public async Task<ActionResult<TestFile>> DeleteTestFile(string fileName)
+    [HttpDelete("{fileId}")]
+    public async Task<ActionResult<TestFile>> DeleteTestFile(Guid fileId)
     {
         var id = tokenService.GetId(User);
         if (id is null) return NotFound("Could not find user with the specified id.");
 
-        var file = testRepository.GetTestFile(fileName, id.Value);
+        var file = testRepository.GetTestFile(fileId, id.Value);
         if (file is null) return NotFound();
 
         await testRepository.DeleteTestFile(file);
@@ -58,37 +58,37 @@ public class TestsController(
     }
 
     [HttpPost]
-    public async Task<IActionResult> PostTestFile([FromBody] TestFileDTO fileDTO)
+    public async Task<ActionResult<TestFile>> PostTestFile([FromBody] TestFileDTO fileDTO)
     {
         var id = tokenService.GetId(User);
         if (id is null) return NotFound("Could not find user with the specified id.");
 
-        var file = testRepository.GetTestFile(fileDTO.FileName, id.Value);
+        var file = testRepository.GetTestFileByName(fileDTO.FileName, id.Value);
         if (file is null)
         {
-            await testRepository.UploadTestFile(id.Value, fileDTO.FileName, fileDTO.Content);
-            return NoContent();
+            var createdFile = await testRepository.UploadTestFile(id.Value, fileDTO.FileName, fileDTO.Content);
+            return Ok(createdFile);
         }
 
         return BadRequest("File with this name already exists");
     }
 
-    [HttpPut]
-    public async Task<IActionResult> UpdateTestFile([FromBody] TestFileDTO fileDTO)
+    [HttpPut("{fileId}")]
+    public async Task<ActionResult<TestFile>> UpdateTestFile(Guid fileId, [FromBody] TestFileDTO fileDTO)
     {
-        var id = tokenService.GetId(User);
-        if (id is null) return NotFound("Could not find user with the specified id.");
+        var userId = tokenService.GetId(User);
+        if (userId is null) return NotFound("Could not find user with the specified id.");
 
-        var file = testRepository.GetTestFile(fileDTO.FileName, id.Value);
+        var file = testRepository.GetTestFile(fileId, userId.Value);
         if (file is null) return BadRequest("File with this name does not exist");
 
-        await testRepository.UpdateTestFile(file, fileDTO.Content);
-        return NoContent();
+        var updatedFile = await testRepository.UpdateTestFile(file, fileDTO.Content);
+        return Ok(updatedFile);
     }
 
-    [HttpGet("{fileName}/run")]
+    [HttpGet("{fileId}/run")]
     [AllowAnonymous]
-    public async Task<IActionResult> Parse(string fileName)
+    public async Task<IActionResult> Parse(Guid fileId)
     {
         var rawToken = Request.Query["token"].FirstOrDefault()?.Split(" ").Last();
         if (string.IsNullOrEmpty(rawToken))
@@ -105,26 +105,33 @@ public class TestsController(
             return Unauthorized("User is not authorized");
         }
 
-        var testFile = testRepository.GetTestFile(fileName, (int)userId);
+        var testFile = testRepository.GetTestFile(fileId, userId.Value);
         if (testFile is null)
         {
             Console.WriteLine("Test file not found");
             return NotFound("Could not find test file");
         }
 
+        var testLogKey = new LogKey(userId.Value, testFile.Id);
+        var logs = await logService.Get(testLogKey);
+        if (logs is not null && logs.Count != 0)
+        {
+            return BadRequest("There is a test already running.");
+        }
+
         SetSEEHeaders(Response);
 
-        httpService.Add((int)userId, testFile.Id.ToString(), Response);
+        httpService.Add(userId.Value, testFile.Id, Response);
 
         await executionService.RunTestAsync(testFile, rawToken);
 
-        httpService.Remove((int)userId, testFile.Id.ToString());
+        httpService.Remove(userId.Value, testFile.Id);
 
         return new EmptyResult();
     }
 
-    [HttpGet("{fileName}/runs")]
-    public ActionResult<List<TestRun>> GetTestsRuns(string fileName)
+    [HttpGet("{fileId}/runs")]
+    public ActionResult<List<TestRun>> GetTestsRuns(Guid fileId)
     {
         var userId = tokenService.GetId(User);
         if (userId == null)
@@ -132,7 +139,7 @@ public class TestsController(
             return Unauthorized("User is not authorized");
         }
 
-        var testFile = testRepository.GetTestFile(fileName, (int)userId);
+        var testFile = testRepository.GetTestFile(fileId, userId.Value);
         if (testFile is null)
         {
             Console.WriteLine("Test file not found");
@@ -145,9 +152,9 @@ public class TestsController(
         return Ok(testRuns);
     }
 
-    [HttpGet("{fileName}/reconnect")]
+    [HttpGet("{fileId}/reconnect")]
     [AllowAnonymous]
-    public async Task<ActionResult> Reconnect(string fileName)
+    public async Task<ActionResult> Reconnect(Guid fileId)
     {
         var rawToken = Request.Query["token"].FirstOrDefault()?.Split(" ").Last();
         if (string.IsNullOrEmpty(rawToken))
@@ -164,46 +171,46 @@ public class TestsController(
             return Unauthorized("User is not authorized");
         }
 
-        var testFile = testRepository.GetTestFile(fileName, (int)userId);
+        var testFile = testRepository.GetTestFile(fileId, userId.Value);
         if (testFile is null)
         {
             Console.WriteLine("Test file not found");
             return NotFound("Could not find test file");
         }
 
-        var testLogKey = new LogKey((int)userId, testFile.Id.ToString());
+        var testLogKey = new LogKey(userId.Value, testFile.Id);
         var logs = await logService.Get(testLogKey);
         if (logs.IsNullOrEmpty())
         {
-            Console.WriteLine($"No running test to reconnect for test file '{fileName}' and user {userId}");
+            Console.WriteLine($"No running test to reconnect for test file '{testFile.Name}' and user {userId}");
             return BadRequest("No running test to reconnect.");
         }
         else
         {
             SetSEEHeaders(Response);
-            httpService.Add((int)userId, testFile.Id.ToString(), Response);
-            await httpService.SendSseMessage((int)userId, testFile.Id.ToString(), logs);
-            Console.WriteLine($"Reconnected to test file '{fileName}' for user {userId}");
+            httpService.Add(userId.Value, testFile.Id, Response);
+            await httpService.SendSseMessage(userId.Value, testFile.Id, logs);
+            Console.WriteLine($"Reconnected to test file '{testFile.Name}' for user {userId}");
 
             try
             {
-                while (httpService.Get((int)userId, testFile.Id.ToString()) is not null)
+                while (httpService.Get(userId.Value, testFile.Id) is not null)
                 {
                     await Task.Delay(1000);
                 }
             }
             finally
             {
-                httpService.Remove((int)userId, testFile.Id.ToString());
-                Console.WriteLine($"Connection closed for test file '{fileName}' and user {userId}");
+                httpService.Remove(userId.Value, testFile.Id);
+                Console.WriteLine($"Connection closed for test file '{testFile.Name}' and user {userId}");
             }
         }
 
         return new EmptyResult();
     }
 
-    [HttpPost("{fileName}/cleanup")]
-    public ActionResult CleanupSSE(string fileName)
+    [HttpPost("{fileId}/cleanup")]
+    public ActionResult CleanupSSE(Guid fileId)
     {
         var userId = tokenService.GetId(User);
         if (userId == null)
@@ -211,63 +218,16 @@ public class TestsController(
             return Unauthorized("User is not authorized");
         }
 
-        var testFile = testRepository.GetTestFile(fileName, (int)userId);
+        var testFile = testRepository.GetTestFile(fileId, userId.Value);
         if (testFile is null)
         {
             Console.WriteLine("Test file not found");
             return NotFound("Could not find test file");
         }
 
-        httpService.Remove((int)userId, testFile.Id.ToString());
+        httpService.Remove(userId.Value, testFile.Id);
 
         return NoContent();
-    }
-
-    [HttpGet("{runId}/compiled/run")]
-    [AllowAnonymous]
-    public async Task<IActionResult> RunCompiled(Guid runId)
-    {
-        var rawToken = Request.Query["token"].FirstOrDefault()?.Split(" ").Last();
-        if (string.IsNullOrEmpty(rawToken))
-        {
-            return Unauthorized("Token is missing or invalid");
-        }
-
-        var token = tokenService.ParseToken(rawToken);
-        if (token is null)
-        {
-            return Unauthorized();
-        }
-
-        var userId = tokenService.GetId(token);
-        if (userId == null)
-        {
-            return Unauthorized("User is not authorized");
-        }
-
-        var testRun = testRepository.GetTestRun(runId);
-
-        if (testRun is null)
-        {
-            return NotFound("Run not found");
-        }
-
-        var testFile = testRepository.GetTestFile(testRun.FileId.ToString(), (int)userId);
-
-        if (testFile is null)
-        {
-            return NotFound("Test file not found for this run");
-        }
-
-        SetSEEHeaders(Response);
-
-        httpService.Add((int)userId, testRun.FileId.ToString(), Response);
-
-        await executionService.RunCompiledTestAsync((int)userId, testRun, testFile.Content, rawToken);
-
-        httpService.Remove((int)userId, testRun.FileId.ToString());
-
-        return new EmptyResult();
     }
 
     private static void SetSEEHeaders(HttpResponse response)

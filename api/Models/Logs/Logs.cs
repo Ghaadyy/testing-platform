@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RestrictedNL.Models.Logs;
 
-public record LogKey(int UserId, string FileId)
+public record LogKey(Guid UserId, Guid FileId)
 {
     public override string ToString() => $"Logs_{UserId}:{FileId}";
 };

@@ -24,7 +24,7 @@ public class UsersController(
     }
 
     [HttpGet("{userId}")]
-    public ActionResult<User> Get(int userId)
+    public ActionResult<User> Get(Guid userId)
     {
         var user = userRepository.GetUserById(userId);
         if (user is null) return NotFound("User not found");
@@ -34,7 +34,7 @@ public class UsersController(
     [HttpGet("me")]
     public ActionResult<User> GetUserInfo()
     {
-        int? userId = tokenService.GetId(User);
+        var userId = tokenService.GetId(User);
         if (userId is null) return BadRequest("User ID missing from token");
 
         User? user = userRepository.GetUserById(userId.Value);
@@ -86,36 +86,13 @@ public class UsersController(
         return Ok(new TokenReponse(token, user));
     }
 
-    [HttpPatch("{userId}")]
-    [Authorize]
-    public async Task<ActionResult<User>> Update(int userId, [FromBody] JsonPatchDocument<User> patchDoc)
-    {
-        User? user = userRepository.GetUserById(userId);
-
-        if (user is null) return NotFound("Invalid user id.");
-
-        patchDoc.ApplyTo(user);
-
-        // Validate the user, because when passing JsonPatchDocument,
-        // the underlying user object was not properly validated
-        TryValidateModel(user);
-
-        if (!ModelState.IsValid)
-            return BadRequest("Invalid parameters");
-
-        await userRepository.UpdateUser(user, patchDoc);
-
-        return Ok(user);
-    }
-
     [HttpPatch]
-    [Authorize]
     public async Task<ActionResult<User>> Update([FromBody] JsonPatchDocument<User> patchDoc)
     {
-        int? userId = tokenService.GetId(User);
+        var userId = tokenService.GetId(User);
         if (userId is null) return BadRequest("User ID missing from token");
 
-        User? user = userRepository.GetUserById((int)userId);
+        User? user = userRepository.GetUserById(userId.Value);
         if (user is null) return NotFound("Invalid user id.");
 
         patchDoc.ApplyTo(user);
@@ -132,12 +109,13 @@ public class UsersController(
         return Ok(user);
     }
 
-    [HttpDelete("{userId}")]
-    [Authorize]
-    public async Task<ActionResult<User>> Delete(int userId)
+    public async Task<ActionResult<User>> Delete()
     {
-        var user = userRepository.GetUserById(userId);
-        if (user is null) return NotFound("User does not exist.");
+        var userId = tokenService.GetId(User);
+        if (userId is null) return BadRequest("User ID missing from token");
+
+        User? user = userRepository.GetUserById(userId.Value);
+        if (user is null) return NotFound("Invalid user id.");
 
         await userRepository.DeleteUser(user);
 

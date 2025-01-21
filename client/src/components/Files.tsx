@@ -26,11 +26,11 @@ import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 
 async function deleteFile(
-  fileName: string,
+  fileId: string,
   token: string,
   onSuccess: () => void
 ) {
-  const rest = await fetch(`${API_URL}/api/tests/${fileName}`, {
+  const rest = await fetch(`${API_URL}/api/tests/${fileId}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -64,7 +64,7 @@ function Actions({ file, onDelete }: { file: TestFile; onDelete: () => void }) {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <Link to={`/tests/${file.name}/runs`}>
+        <Link to={`/tests/${file.id}/runs`}>
           <DropdownMenuItem>
             <Workflow /> View previous runs
           </DropdownMenuItem>
@@ -107,10 +107,7 @@ function Files() {
       accessorKey: "name",
       header: sortHeader("File Name"),
       cell: ({ row }) => (
-        <Link
-          className="hover:underline"
-          to={`/editor/${row.getValue("name")}`}
-        >
+        <Link className="hover:underline" to={`/editor/${row.original.id}`}>
           {row.getValue("name")}
         </Link>
       ),
@@ -129,8 +126,8 @@ function Files() {
           <Actions
             file={file}
             onDelete={() =>
-              deleteFile(file.name, token!, () =>
-                setTests((prev) => prev.filter((t) => t.name !== file.name))
+              deleteFile(file.id, token!, () =>
+                setTests((prev) => prev.filter((t) => t.id !== file.id))
               )
             }
           />

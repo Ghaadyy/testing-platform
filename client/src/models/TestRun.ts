@@ -1,5 +1,5 @@
 export type TestRun = {
-  id: number;
+  id: string;
   ranAt: string;
   compiledCode: string;
   rawCode: string;

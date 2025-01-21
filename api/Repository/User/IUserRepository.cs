@@ -5,7 +5,7 @@ using RestrictedNL.Models.User;
 
 public interface IUserRepository
 {
-    User? GetUserById(int userId);
+    User? GetUserById(Guid userId);
     User? GetByUserName(string userName);
     User? GetByEmail(string email);
     User? AuthenticateUser(string email, string password);

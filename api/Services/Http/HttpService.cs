@@ -9,15 +9,15 @@ public class HttpService
 {
     private readonly ConcurrentDictionary<LogKey, HttpResponse> ActiveConnections = new();
 
-    public void Add(int userId, string fileName, HttpResponse response)
+    public void Add(Guid userId, Guid fileId, HttpResponse response)
     {
-        LogKey key = new(userId, fileName);
+        LogKey key = new(userId, fileId);
         ActiveConnections[key] = response;
     }
 
-    public HttpResponse? Get(int userId, string fileName)
+    public HttpResponse? Get(Guid userId, Guid fileId)
     {
-        LogKey key = new(userId, fileName);
+        LogKey key = new(userId, fileId);
 
         if (ActiveConnections.TryGetValue(key, out var response))
         {
@@ -27,13 +27,13 @@ public class HttpService
         return null;
     }
 
-    public void Remove(int userId, string fileName)
+    public void Remove(Guid userId, Guid fileId)
     {
-        LogKey key = new(userId, fileName);
+        LogKey key = new(userId, fileId);
         ActiveConnections.TryRemove(key, out _);
     }
 
-    public async Task SendSseMessage(int userId, string fileId, List<LogGroup> message, string status = "healthy")
+    public async Task SendSseMessage(Guid userId, Guid fileId, List<LogGroup> message, string status = "healthy")
     {
         var response = Get(userId, fileId);
 

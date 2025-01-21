@@ -5,10 +5,11 @@ import { TestFile } from "@/models/TestFile";
 import { TestRun } from "@/models/TestRun";
 import { Loader2Icon } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 function RunsScreen() {
   const { testId } = useParams();
+  const navigate = useNavigate();
 
   const { token } = useContext(UserContext);
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
@@ -56,7 +57,14 @@ function RunsScreen() {
       ) : (
         <h1 className="font-bold text-3xl">{testFile.name}</h1>
       )}
-      <TestRunTable testRuns={testRuns} onRerun={() => {}} />
+      <TestRunTable
+        testRuns={testRuns}
+        onRerun={(run) => {
+          navigate(`/runs/${run.id}?execute=true`, {
+            state: run,
+          });
+        }}
+      />
     </div>
   );
 }
