@@ -37,22 +37,22 @@ public class TestExecutionService(
                     Passed = false
                 });
 
-            await httpService.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
+            await httpService.SendSseMessage(testFile.UserId, testFile.Id, [group]);
             return;
         }
 
-        await httpService.SendSseMessage(testFile.UserId, testFile.Id.ToString(), [group]);
+        await httpService.SendSseMessage(testFile.UserId, testFile.Id, [group]);
 
-        await HandleTestExecutionAsync(testFile.Id.ToString(), testFile.UserId, code, testFile.Content, token);
+        await HandleTestExecutionAsync(testFile.Id, testFile.UserId, code, testFile.Content, token);
     }
 
-    public async Task RunCompiledTestAsync(int userId, TestRun testRun, string rawCode, string token)
+    public async Task RunCompiledTestAsync(Guid userId, TestRun testRun, string rawCode, string token)
     {
         string seleniumCode = testRun.CompiledCode;
-        await HandleTestExecutionAsync(testRun.FileId.ToString(), userId, seleniumCode, rawCode, token);
+        await HandleTestExecutionAsync(testRun.FileId, userId, seleniumCode, rawCode, token);
     }
 
-    private async Task HandleTestExecutionAsync(string fileId, int userId, string seleniumCode, string rawCode, string token)
+    private async Task HandleTestExecutionAsync(Guid fileId, Guid userId, string seleniumCode, string rawCode, string token)
     {
         string tempFilePath = Path.GetTempFileName() + ".js";
 
@@ -75,7 +75,7 @@ public class TestExecutionService(
         await testRepository.UploadTestRun(new TestRun
         {
             Id = runId,
-            FileId = int.Parse(fileId),
+            FileId = fileId,
             Passed = Success,
             RanAt = DateTime.UtcNow,
             Duration = Duration,
@@ -87,7 +87,7 @@ public class TestExecutionService(
         await logService.Remove(key);
     }
 
-    private async Task<(bool Success, long Duration)> RunTestProcessAsync(Guid processId, int userId, string fileId, string tempFilePath)
+    private async Task<(bool Success, long Duration)> RunTestProcessAsync(Guid processId, Guid userId, Guid fileId, string tempFilePath)
     {
         //Add process to repo
         await processService.Add(processId, userId, fileId);

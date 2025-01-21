@@ -9,11 +9,11 @@ public class RedisProcessService(IDistributedCache cache)
     private readonly IDistributedCache _cache = cache;
     private static string GetKey(Guid processId) => $"Process_{processId}";
 
-    public async Task Add(Guid processId, int userId, string fileName)
+    public async Task Add(Guid processId, Guid userId, Guid fileId)
     {
         string cacheKey = GetKey(processId);
 
-        var seralizedLogKey = JsonConvert.SerializeObject(new LogKey(userId, fileName));
+        var seralizedLogKey = JsonConvert.SerializeObject(new LogKey(userId, fileId));
 
         await _cache.SetStringAsync(cacheKey, seralizedLogKey);
     }

@@ -14,14 +14,14 @@ public record TestFile
 {
     [Key]
     [Column("id")]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     [Column("name")]
     public required string Name { get; set; }
 
     [ForeignKey("UserId")]
     [Column("user_id")]
-    public required int UserId { get; set; }
+    public required Guid UserId { get; set; }
 
     [Column("content")]
     public required string Content { get; set; }

@@ -10,7 +10,7 @@ public class UserRepository(TestContext context) : IUserRepository
 
     public IEnumerable<User> GetUsers() => context.Users;
 
-    public User? GetUserById(int userId)
+    public User? GetUserById(Guid userId)
         => (from u in context.Users
             where u.Id == userId
             select u).FirstOrDefault();

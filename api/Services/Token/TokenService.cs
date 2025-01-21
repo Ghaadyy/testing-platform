@@ -8,11 +8,11 @@ namespace RestrictedNL.Services.Token;
 
 public class TokenService(IConfiguration configuration) : ITokenService
 {
-    public int? GetId(ClaimsPrincipal claim)
+    public Guid? GetId(ClaimsPrincipal claim)
     {
         var nameIdentifier = claim.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (nameIdentifier is not null && int.TryParse(nameIdentifier, out int userId))
+        if (nameIdentifier is not null && Guid.TryParse(nameIdentifier, out Guid userId))
         {
             return userId;
         }

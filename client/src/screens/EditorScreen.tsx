@@ -13,16 +13,17 @@ import { parseCode } from "@/utils/parseCode";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { LogGroup } from "@/models/Log";
+import { TestFile } from "@/models/TestFile";
 
 function EditorScreen() {
-  const { test } = useParams();
+  const { testId } = useParams();
   const { toast } = useToast();
 
   const { token } = useContext(UserContext);
 
   const [logs, setLogs] = useState<LogGroup[]>([]);
 
-  const [fileName, setFileName] = useState<string>(test!);
+  const [fileId, setFileId] = useState<string>(testId!);
   const [code, setCode] = useState<string>("");
   const [isCode, setIsCode] = useState<boolean>(true);
   const [tests, setTests] = useState<Test[]>([]);
@@ -70,15 +71,15 @@ function EditorScreen() {
   }
 
   const saveDocument = useCallback(
-    async function (code: string, savedFileName: string) {
-      const res = await fetch(`${API_URL}/api/tests`, {
-        method: fileName ? "PUT" : "POST",
+    async function (code: string, fileId: string) {
+      const res = await fetch(`${API_URL}/api/tests/${fileId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          fileName: savedFileName,
+          fileName: fileId, // TODO: FIX
           content: code,
         }),
       });
@@ -89,26 +90,26 @@ function EditorScreen() {
         });
         return;
       }
-
-      setFileName(savedFileName);
+      const file: TestFile = await res.json();
+      setFileId(file.id);
       setCode(code);
       toast({
         title: "Saved successfully!",
       });
     },
-    [fileName, toast, token]
+    [toast, token]
   );
 
   const handleSave = useCallback(
-    async function (fileName: string) {
+    async function (fileId: string) {
       if (isCode) {
-        await saveDocument(code, fileName);
+        await saveDocument(code, fileId);
       } else {
         const generatedCode = generateCode(tests);
         const [, status] = parseCode(generatedCode);
         if (status) {
           setCode(generatedCode);
-          await saveDocument(generatedCode, fileName);
+          await saveDocument(generatedCode, fileId);
         } else {
           toast({
             title: "Test syntax error!",
@@ -122,14 +123,14 @@ function EditorScreen() {
     [code, isCode, saveDocument, tests, toast]
   );
 
-  const reconnect = (fileName: string) => {
+  const reconnect = (fileId: string) => {
     console.log("Reconnecting...");
 
     if (eventSource) {
       eventSource.close();
     }
 
-    const url = `http://localhost:5064/api/tests/${fileName}/reconnect?token=${token}`;
+    const url = `${API_URL}/api/tests/${fileId}/reconnect?token=${token}`;
     const newEventSource = new EventSource(url);
     setEventSource(newEventSource);
 
@@ -159,20 +160,20 @@ function EditorScreen() {
     };
   };
 
-  const cleanup = async (fileName: string) => {
+  const cleanup = async (fileId: string) => {
     if (eventSource) {
       eventSource.close();
     }
     try {
-      const url = `http://localhost:5064/api/tests/${fileName}/cleanup`;
+      const url = `${API_URL}/api/tests/${fileId}/cleanup`;
       await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ fileName }),
+        body: JSON.stringify({ fileId }),
       });
-      console.log(`Server resources cleaned up for file: ${fileName}`);
+      console.log(`Server resources cleaned up for file: ${fileId}`);
     } catch (err) {
       console.error("Error cleaning up server resources: ", err);
     }
@@ -183,18 +184,18 @@ function EditorScreen() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === "s") {
         event.preventDefault();
-        handleSave(fileName);
+        handleSave(fileId);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [fileName, handleSave]);
+  }, [fileId, handleSave]);
 
   // Reconnect if possible when mounted and close connection and cleanup on unmount
   useEffect(() => {
-    if (fileName) {
-      reconnect(fileName);
+    if (fileId) {
+      reconnect(fileId);
     }
 
     return () => {
@@ -202,8 +203,8 @@ function EditorScreen() {
         eventSource.close();
         console.log("SSE connection closed during cleanup.");
       }
-      if (fileName) {
-        cleanup(fileName);
+      if (fileId) {
+        cleanup(fileId);
       }
     };
   }, []);
@@ -211,8 +212,8 @@ function EditorScreen() {
   return (
     <MainContext.Provider
       value={{
-        fileName,
-        setFileName,
+        fileId,
+        setFileId,
         code,
         setCode,
         isCode,
@@ -223,9 +224,7 @@ function EditorScreen() {
     >
       <div className="h-screen w-screen flex flex-col gap-3 p-3">
         <Menu
-          onRun={() =>
-            runTest(`http://localhost:5064/api/tests/${fileName}/run`)
-          }
+          onRun={() => runTest(`${API_URL}/api/tests/${fileId}/run`)}
           onSave={handleSave}
         />
         <Dashboard logs={logs} />

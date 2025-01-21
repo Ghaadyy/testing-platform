@@ -1,4 +1,5 @@
 export type Assertion = {
+  id: string;
   testName: string;
   message: string;
   passed: boolean;
@@ -10,6 +11,7 @@ export enum LogStatus {
 }
 
 export type LogGroup = {
+  id: string;
   testName: string;
   status: LogStatus;
   assertions: Assertion[];

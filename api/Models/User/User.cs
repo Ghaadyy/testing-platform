@@ -8,7 +8,7 @@ public class User
 {
     [Key]
     [Column("id")]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     [Column("first_name")]
     [MinLength(3)]

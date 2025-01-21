@@ -21,7 +21,7 @@ import {
 } from "@/shadcn/components/ui/dropdown-menu";
 import { useNavigate } from "react-router";
 
-type Props = { testRuns: TestRun[]; onRerun: (id: number) => void };
+type Props = { testRuns: TestRun[]; onRerun: (run: TestRun) => void };
 
 const sortHeader = (name: string) => {
   return ({ column }: { column: Column<TestRun, unknown> }) => (
@@ -60,7 +60,7 @@ function TestRunTable({ testRuns, onRerun }: Props) {
           >
             <Binoculars /> View test
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onRerun(run.id)}>
+          <DropdownMenuItem onClick={() => onRerun(run)}>
             <RefreshCcw /> Replay test
           </DropdownMenuItem>
         </DropdownMenuContent>

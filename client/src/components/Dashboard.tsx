@@ -27,13 +27,13 @@ type Props = {
 };
 
 async function openDocument(
-  fileName: string,
+  fileId: string,
   token: string,
   onSuccess: (file: TestFile) => void,
   onError?: (err?: unknown) => void
 ) {
   try {
-    const res = await fetch(`${API_URL}/api/tests/${fileName}`, {
+    const res = await fetch(`${API_URL}/api/tests/${fileId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -51,7 +51,7 @@ async function openDocument(
 }
 
 function Dashboard({ logs }: Props) {
-  const { code, setCode, tests, setTests, isCode, setIsCode, fileName } =
+  const { code, setCode, tests, setTests, isCode, setIsCode, fileId } =
     useContext(MainContext);
   const { token } = useContext(UserContext);
 
@@ -79,7 +79,7 @@ function Dashboard({ logs }: Props) {
   }
 
   useEffect(() => {
-    openDocument(fileName, token!, ({ content }) => {
+    openDocument(fileId, token!, ({ content }) => {
       const [parsedTests, , nextId] = parseCode(content);
       setCode(content);
       setTests(parsedTests);
@@ -88,7 +88,7 @@ function Dashboard({ logs }: Props) {
         title: "File opened successfully",
       });
     });
-  }, [fileName, setCode, setTests, token]);
+  }, [fileId, setCode, setTests, token]);
 
   return (
     <ResizablePanelGroup direction="vertical">
@@ -140,66 +140,6 @@ function Dashboard({ logs }: Props) {
       </ResizablePanel>
     </ResizablePanelGroup>
   );
-
-  // return (
-  //   <ResizablePanelGroup
-  //     direction="horizontal"
-  //     className="h-full w-full rounded-lg"
-  //   >
-  //     <ResizablePanel className="flex flex-col gap-3 px-3">
-  //       <div className="flex flex-row gap-3 items-center">
-  //         <Switch
-  //           id="code-toggle"
-  //           checked={isCode}
-  //           onCheckedChange={handleEditorSwitch}
-  //         />
-  //         <Label htmlFor="code-toggle">
-  //           {isCode ? "Use visual editor" : "Use code editor"}
-  //         </Label>
-  //       </div>
-  //       {isCode ? (
-  //         <Editor
-  //           height="100%"
-  //           options={{
-  //             minimap: {
-  //               enabled: false,
-  //             },
-  //             fontSize: 14,
-  //           }}
-  //           language={"rnl"}
-  //           className="editor-wrapper"
-  //           theme={"rnl-theme"}
-  //           value={code}
-  //           onChange={(c) => setCode(c ?? "")}
-  //           beforeMount={setupEditor}
-  //         />
-  //       ) : (
-  //         <TestCreator statementId={statementId} />
-  //       )}
-  //     </ResizablePanel>
-  //     <ResizableHandle withHandle />
-  //     <ResizablePanel defaultSize={50}>
-  //       <ResizablePanelGroup direction="vertical">
-  //         <ResizablePanel className="flex flex-col gap-3 p-3" defaultSize={60}>
-  //           <TestRunTable testRuns={testRuns} onRerun={onRerun} />
-  //         </ResizablePanel>
-  //         <ResizableHandle withHandle />
-  //         <ResizablePanel defaultSize={40} className="p-3 flex flex-col gap-3">
-  //           <h1 className="font-bold text-2xl">Logs</h1>
-  //           <ScrollArea>
-  //             {Object.keys(logs).length === 0 ? (
-  //               <p>There are no tests running yet. Try running a test first!</p>
-  //             ) : (
-  //               <div className="flex flex-col gap-3">
-  //                 <TestLogs logs={logs} />
-  //               </div>
-  //             )}
-  //           </ScrollArea>
-  //         </ResizablePanel>
-  //       </ResizablePanelGroup>
-  //     </ResizablePanel>
-  //   </ResizablePanelGroup>
-  // );
 }
 
 export default Dashboard;

@@ -69,7 +69,7 @@ function App() {
     },
     { path: "/auth/login", element: anonymous(<LoginScreen />) },
     { path: "/auth/signup", element: anonymous(<SignUpScreen />) },
-    { path: "/editor/:test", element: authorize(<EditorScreen />) },
+    { path: "/editor/:testId", element: authorize(<EditorScreen />) },
   ]);
 
   return (

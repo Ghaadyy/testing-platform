@@ -12,7 +12,7 @@ public record TestRun
 
     [ForeignKey("fileId")]
     [Column("file_id")]
-    public required int FileId { get; set; }
+    public required Guid FileId { get; set; }
 
     [Column("ran_at")]
     public required DateTime RanAt { get; set; }

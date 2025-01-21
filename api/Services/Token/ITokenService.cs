@@ -5,7 +5,7 @@ namespace RestrictedNL.Services.Token;
 
 public interface ITokenService
 {
-    int? GetId(ClaimsPrincipal claim);
+    Guid? GetId(ClaimsPrincipal claim);
     string GenerateToken(User user);
     ClaimsPrincipal? ParseToken(string token);
 }
