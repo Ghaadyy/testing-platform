@@ -32,6 +32,8 @@ import { useTheme } from "@/shadcn/components/theme-provider";
 import { NavUser } from "./NavUser";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
+import { MainContext } from "@/context/MainContext";
+import { TestFile } from "@/models/TestFile";
 
 type HomeSideBarProps = {
   children: React.ReactNode;
@@ -39,6 +41,7 @@ type HomeSideBarProps = {
 
 function HomeSideBar({ children }: HomeSideBarProps) {
   const { user, token } = useContext(UserContext);
+  const { setFileId } = useContext(MainContext);
   const [fileName, setFileName] = useState<string>("");
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -62,6 +65,10 @@ function HomeSideBar({ children }: HomeSideBarProps) {
       });
       return;
     }
+
+    const file: TestFile = await res.json();
+    setFileId(file.id);
+    return file.id;
   }
 
   return (
@@ -102,9 +109,9 @@ function HomeSideBar({ children }: HomeSideBarProps) {
                             <Button
                               type="button"
                               variant="default"
-                              onClick={() => {
-                                createFile(fileName);
-                                navigate(`/editor/${fileName}`);
+                              onClick={async () => {
+                                const id = await createFile(fileName);
+                                navigate(`/editor/${id}`);
                               }}
                             >
                               Create
