@@ -13,6 +13,7 @@ import { jwtDecode } from "jwt-decode";
 import RootLayout from "./layouts/RootLayout";
 import RunsScreen from "./screens/RunsScreen";
 import ViewRunScreen from "./screens/ViewRunScreen";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -60,27 +61,34 @@ function App() {
         { path: "tests/:testId/runs", element: authorize(<RunsScreen />) },
       ],
     },
-    { path: "/runs/:runId", element: authorize(<ViewRunScreen />) },
+    {
+      path: "/tests/:testId/runs/:runId",
+      element: authorize(<ViewRunScreen />),
+    },
     { path: "/auth/login", element: anonymous(<LoginScreen />) },
     { path: "/auth/signup", element: anonymous(<SignUpScreen />) },
     { path: "/editor/:testId", element: authorize(<EditorScreen />) },
   ]);
 
+  const queryClient = new QueryClient();
+
   return (
     <DndProvider backend={HTML5Backend}>
       <ThemeProvider defaultTheme="dark">
-        <UserContext.Provider
-          value={{
-            user,
-            setUser,
-            token,
-            setToken,
-            isAuthenticated,
-            setIsAuthenticated,
-          }}
-        >
-          {authInitialized && <RouterProvider router={router} />}
-        </UserContext.Provider>
+        <QueryClientProvider client={queryClient}>
+          <UserContext.Provider
+            value={{
+              user,
+              setUser,
+              token,
+              setToken,
+              isAuthenticated,
+              setIsAuthenticated,
+            }}
+          >
+            {authInitialized && <RouterProvider router={router} />}
+          </UserContext.Provider>
+        </QueryClientProvider>
       </ThemeProvider>
     </DndProvider>
   );

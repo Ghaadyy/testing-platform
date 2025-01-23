@@ -9,14 +9,15 @@ import { MainContext } from "@/context/MainContext";
 import { useTheme } from "@/shadcn/components/theme-provider";
 import { Moon, Sun } from "lucide-react";
 import { Link } from "react-router";
+import { useSave } from "@/hooks/useSave";
+import { useShortcut } from "@/hooks/useShortcut";
 
-type Props = {
-  onRun: () => void;
-  onSave: (fileId: string) => void;
-};
+type Props = { onRun: () => void };
 
-function Menu({ onRun, onSave }: Props) {
-  const { fileId } = useContext(MainContext);
+function Menu({ onRun }: Props) {
+  const { fileId, code } = useContext(MainContext);
+  const { saveDocument } = useSave();
+  useShortcut(() => saveDocument(fileId, code), onRun);
 
   const { theme, setTheme } = useTheme();
 
@@ -30,7 +31,9 @@ function Menu({ onRun, onSave }: Props) {
         </MenubarMenu>
         <MenubarMenu>
           <MenubarMenu>
-            <MenubarTrigger onClick={() => onSave(fileId)}>Save</MenubarTrigger>
+            <MenubarTrigger onClick={() => saveDocument(fileId, code)}>
+              Save
+            </MenubarTrigger>
           </MenubarMenu>
           <MenubarMenu>
             <MenubarTrigger onClick={onRun} disabled={!fileId}>

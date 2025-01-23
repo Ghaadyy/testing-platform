@@ -3,13 +3,7 @@ import { Button } from "@/shadcn/components/ui/button";
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 import { DataTable } from "./DataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  Binoculars,
-  CircleCheck,
-  CircleX,
-  MoreHorizontal,
-  RefreshCcw,
-} from "lucide-react";
+import { Binoculars, CircleCheck, CircleX, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,9 +15,12 @@ import {
 import { useNavigate } from "react-router";
 import { sortHeader } from "@/utils/sortHeader";
 
-type Props = { testRuns: TestRun[]; onRerun: (run: TestRun) => void };
+type Props = {
+  testId: string;
+  testRuns: TestRun[];
+};
 
-function TestRunTable({ testRuns, onRerun }: Props) {
+function TestRunTable({ testId, testRuns }: Props) {
   const navigate = useNavigate();
 
   function Actions({ run }: { run: TestRun }) {
@@ -40,15 +37,12 @@ function TestRunTable({ testRuns, onRerun }: Props) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() =>
-              navigate(`/runs/${run.id}`, {
+              navigate(`/tests/${testId}/runs/${run.id}`, {
                 state: run,
               })
             }
           >
             <Binoculars /> View test
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onRerun(run)}>
-            <RefreshCcw /> Replay test
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
