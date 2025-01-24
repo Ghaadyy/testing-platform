@@ -22,8 +22,8 @@ function makeEventSource(
     }
   };
 
-  eventSource.onerror = (error) => {
-    console.error("[SSE] An error occured: ", error);
+  eventSource.onerror = () => {
+    console.log("[SSE] An error occured.");
     eventSource.close();
   };
 
