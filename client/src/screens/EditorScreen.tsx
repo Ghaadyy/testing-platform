@@ -1,7 +1,6 @@
 import Menu from "@/components/Menu";
 import Editor from "@/components/Editor";
 import { useCallback, useState } from "react";
-import { Toaster } from "@/shadcn/components/ui/toaster";
 import { MainContext } from "@/context/MainContext";
 import { useParams } from "react-router";
 import { Test } from "@/models/Statement";
@@ -37,7 +36,6 @@ function EditorScreen() {
       <div className="h-screen w-screen flex flex-col gap-3 p-3">
         <Menu onRun={run} />
         <Editor logs={logs} />
-        <Toaster />
       </div>
     </MainContext.Provider>
   );
