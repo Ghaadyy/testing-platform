@@ -8,6 +8,8 @@ export type UserContext = {
   setToken: Dispatch<SetStateAction<string | null>>;
   isAuthenticated: boolean;
   setIsAuthenticated: Dispatch<SetStateAction<boolean>>;
+  authInitialized: boolean;
+  setAuthInitialized: Dispatch<SetStateAction<boolean>>;
 };
 
 export const UserContext = createContext<UserContext>({
@@ -17,4 +19,6 @@ export const UserContext = createContext<UserContext>({
   setToken: () => "",
   isAuthenticated: false,
   setIsAuthenticated: () => false,
+  authInitialized: false,
+  setAuthInitialized: () => false,
 });

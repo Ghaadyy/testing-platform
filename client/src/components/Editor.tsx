@@ -5,7 +5,7 @@ import {
 } from "@/shadcn/components/ui/resizable";
 import { Editor as MonacoEditor } from "@monaco-editor/react";
 import { useContext, useEffect, useState } from "react";
-import { MainContext } from "@/context/MainContext";
+import { EditorContext } from "@/context/EditorContext";
 import TestLogs from "./TestLogs";
 import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
@@ -48,7 +48,7 @@ async function openDocument(
 
 function Editor({ logs }: Props) {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileId } =
-    useContext(MainContext);
+    useContext(EditorContext);
   const { token } = useContext(UserContext);
 
   const [statementId, setStatementId] = useState<number>(1);

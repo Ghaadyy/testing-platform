@@ -1,7 +1,7 @@
 import { Test } from "@/models/Statement";
 import { createContext, Dispatch, SetStateAction } from "react";
 
-export type MainContext = {
+export type EditorContext = {
   fileId: string;
   setFileId: Dispatch<SetStateAction<string>>;
   code: string;
@@ -12,7 +12,7 @@ export type MainContext = {
   setTests: Dispatch<SetStateAction<Test[]>>;
 };
 
-export const MainContext = createContext<MainContext>({
+export const EditorContext = createContext<EditorContext>({
   fileId: "",
   setFileId: () => "",
   code: "",

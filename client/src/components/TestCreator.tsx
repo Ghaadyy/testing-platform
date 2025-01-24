@@ -15,13 +15,13 @@ import {
 import { Input } from "@/shadcn/components/ui/input";
 import { useToast } from "@/shadcn/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/shadcn/components/ui/scroll-area";
-import { MainContext } from "@/context/MainContext";
+import { EditorContext } from "@/context/EditorContext";
 
 function AddTestDialog() {
   const { toast } = useToast();
 
   const [testName, setTestName] = useState<string>("");
-  const { setTests } = useContext(MainContext);
+  const { setTests } = useContext(EditorContext);
 
   return (
     <div className="self-end flex flex-row gap-3">
@@ -77,7 +77,7 @@ function AddTestDialog() {
 }
 
 function TestCreator({ statementId }: { statementId: number }) {
-  const { tests, setTests } = useContext(MainContext);
+  const { tests, setTests } = useContext(EditorContext);
 
   return (
     <>

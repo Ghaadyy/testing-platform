@@ -1,4 +1,4 @@
-import { MainContext } from "@/context/MainContext";
+import { EditorContext } from "@/context/EditorContext";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { TestFile } from "@/models/TestFile";
@@ -24,7 +24,7 @@ type Props = {
 
 function CreateFileDialog({ children }: Props) {
   const [fileName, setFileName] = useState<string>("");
-  const { setFileId } = useContext(MainContext);
+  const { setFileId } = useContext(EditorContext);
   const { token } = useContext(UserContext);
   const navigate = useNavigate();
 

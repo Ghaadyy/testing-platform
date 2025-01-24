@@ -1,4 +1,4 @@
-import { MainContext } from "@/context/MainContext";
+import { EditorContext } from "@/context/EditorContext";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { useToast } from "@/shadcn/hooks/use-toast";
@@ -9,7 +9,7 @@ import { useContext } from "react";
 export function useSave() {
   const { toast } = useToast();
   const { token } = useContext(UserContext);
-  const { setCode, isCode, tests } = useContext(MainContext);
+  const { setCode, isCode, tests } = useContext(EditorContext);
 
   async function saveDocument(fileId: string, code: string) {
     if (!isCode) {

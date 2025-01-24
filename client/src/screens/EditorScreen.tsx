@@ -1,7 +1,7 @@
 import Menu from "@/components/Menu";
 import Editor from "@/components/Editor";
 import { useCallback, useState } from "react";
-import { MainContext } from "@/context/MainContext";
+import { EditorContext } from "@/context/EditorContext";
 import { useParams } from "react-router";
 import { Test } from "@/models/Statement";
 import { LogGroup } from "@/models/Log";
@@ -21,7 +21,7 @@ function EditorScreen() {
   const { run } = useTest(fileId, onMessage);
 
   return (
-    <MainContext.Provider
+    <EditorContext.Provider
       value={{
         fileId,
         setFileId,
@@ -37,7 +37,7 @@ function EditorScreen() {
         <Menu onRun={run} />
         <Editor logs={logs} />
       </div>
-    </MainContext.Provider>
+    </EditorContext.Provider>
   );
 }
 

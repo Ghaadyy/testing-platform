@@ -5,7 +5,7 @@ import {
 } from "@/shadcn/components/ui/menubar";
 import { Button } from "@/shadcn/components/ui/button";
 import { useContext } from "react";
-import { MainContext } from "@/context/MainContext";
+import { EditorContext } from "@/context/EditorContext";
 import { useTheme } from "@/shadcn/components/theme-provider";
 import { Moon, Sun } from "lucide-react";
 import { Link } from "react-router";
@@ -15,7 +15,7 @@ import { useShortcut } from "@/hooks/useShortcut";
 type Props = { onRun: () => void };
 
 function Menu({ onRun }: Props) {
-  const { fileId, code } = useContext(MainContext);
+  const { fileId, code } = useContext(EditorContext);
   const { saveDocument } = useSave();
   useShortcut(() => saveDocument(fileId, code), onRun);
 
