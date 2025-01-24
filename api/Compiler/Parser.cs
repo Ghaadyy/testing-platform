@@ -1,29 +1,46 @@
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 using System.Text;
 
 namespace RestrictedNL.Compiler;
 
 public static class Parser
 {
-    private const string _dllImportPath = @"librestricted_nl_lib";
-
-    [DllImport(_dllImportPath, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool parse(string path, out string code, out IntPtr errors, out int errorCount);
-
-    public static (string code, string[] errors) Parse(string path)
+    public static async Task<(string code, List<string> errors)> Parse(string code)
     {
-        parse(path, out string code, out IntPtr errors, out int errorCount);
-
-        List<string> errs = [];
-
-        for (int i = 0; i < errorCount; ++i)
+        var compInfo = new ProcessStartInfo
         {
-            IntPtr errorPtr = Marshal.ReadIntPtr(errors, i * IntPtr.Size);
-            string? error = Marshal.PtrToStringAnsi(errorPtr);
-            if (error is not null) errs.Add(error);
+            FileName = "rnlc",
+            // this should be moved to an env var when the compiler supports it
+            Arguments = "--keep-xpath",
+            UseShellExecute = false,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+
+        using var compiler = Process.Start(compInfo);
+        if (compiler is null) return ("", []);
+
+        using (var writer = compiler.StandardInput)
+        {
+            await writer.WriteAsync(code);
+            await writer.FlushAsync();
         }
 
-        return (code, errs.ToArray());
+        await compiler.WaitForExitAsync();
+
+        using var reader = compiler.StandardOutput;
+        var compiledCode = await reader.ReadToEndAsync();
+
+        using var err = compiler.StandardError;
+        var errors = new List<string>();
+
+        string? error;
+
+        while ((error = err.ReadLine()) != null)
+            errors.Add(error);
+
+        return (compiledCode, errors.ToList());
     }
 
     public static string ConfigureSeeClick(string code, string token, string url)

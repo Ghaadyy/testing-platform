@@ -18,16 +18,17 @@ public class TestExecutionService(
 {
     public async Task RunTestAsync(TestFile testFile, string token)
     {
-        var (code, errors) = Parser.Parse(testFile.Content);
+        var (code, errors) = await Parser.Parse(testFile.Content);
         var group = new LogGroup
         {
             TestName = "Compiled succesfully",
             Status = LogStatus.FINISHED,
         };
 
-        if (errors.Length > 0)
+        if (errors.Count > 0)
         {
-            group.TestName = "Could not compile test file";
+            group.TestName = errors.Last();
+            errors.RemoveAt(errors.Count - 1);
 
             foreach (string err in errors)
                 group.Assertions.Add(new Assertion
