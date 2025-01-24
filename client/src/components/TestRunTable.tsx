@@ -81,7 +81,7 @@ function TestRunTable({ testId, testRuns }: Props) {
 
   return (
     <ScrollArea>
-      <DataTable columns={columns} data={testRuns} key="Passed" />
+      <DataTable columns={columns} data={testRuns} sortKey="ranAt" desc />
     </ScrollArea>
   );
 }

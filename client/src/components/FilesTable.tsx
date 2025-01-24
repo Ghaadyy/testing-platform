@@ -111,6 +111,8 @@ function FilesTable({ tests: defaultTests }: Props) {
         createdAt: new Date(file.createdAt).toLocaleString(),
         updatedAt: new Date(file.updatedAt).toLocaleString(),
       }))}
+      sortKey="updatedAt"
+      desc
     />
   );
 }

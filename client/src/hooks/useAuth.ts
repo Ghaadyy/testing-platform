@@ -1,8 +1,15 @@
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { TokenResponse } from "@/models/TokenResponse";
-import { User } from "@/models/User";
 import { useContext } from "react";
+
+type User = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  password: string;
+};
 
 export function useAuth() {
   const { setToken, setIsAuthenticated, setUser } = useContext(UserContext);
