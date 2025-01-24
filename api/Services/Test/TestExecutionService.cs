@@ -95,53 +95,28 @@ public class TestExecutionService(
 
         Stopwatch stopwatch = new();
 
-        // install npm dependencies
-        var npmInstallInfo = new ProcessStartInfo
+        // instantiate the container which 
+        // will run the selenium script
+        var dockerInfo = new ProcessStartInfo
         {
-            FileName = OperatingSystem.IsWindows() ? "npm.cmd" : "npm",
-            Arguments = "install websocket selenium-webdriver websocket",
+            FileName = "docker",
+            Arguments = $"run --rm -v \"{tempFilePath}:/app/script.js\" test-environment mocha /app/script.js",
             UseShellExecute = false,
             CreateNoWindow = true,
-            WorkingDirectory = Path.GetDirectoryName(tempFilePath),
         };
 
-        using var npmProc = Process.Start(npmInstallInfo);
-        if (npmProc is null)
+        using var process = Process.Start(dockerInfo);
+        if (process is null)
         {
             File.Delete(tempFilePath);
             await httpService.SendSseMessage(userId, fileId, [new LogGroup
             {
-                TestName = "Failed to start npm process for dependency installation",
+                TestName = "Failed to start Selenium process.",
                 Status = LogStatus.FINISHED,
             }]);
             return (false, 0);
         }
-        await npmProc.WaitForExitAsync();
-
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = OperatingSystem.IsWindows() ? "mocha.cmd" : "mocha",
-            Arguments = $"{tempFilePath}",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        stopwatch.Start();
-        using var process = Process.Start(startInfo);
-        if (process is null)
-        {
-            File.Delete(tempFilePath);
-            stopwatch.Stop();
-            await httpService.SendSseMessage(userId, fileId, [new LogGroup
-            {
-                TestName = "Failed to start process",
-                Status = LogStatus.FINISHED
-            }]);
-            return (false, stopwatch.ElapsedMilliseconds);
-        }
-
         await process.WaitForExitAsync();
-        stopwatch.Stop();
 
         File.Delete(tempFilePath);
 

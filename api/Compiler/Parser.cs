@@ -84,7 +84,7 @@ public static class Parser
         }}
 
         async function beforeHook() {{
-            socket = new WebSocket('ws://localhost:5064/ws/selenium?processId={processId}');
+            socket = new WebSocket('ws://host.docker.internal:5064/ws/selenium?processId={processId}');
             socket.onopen = async function () {{
                 console.log('open');
             }};
