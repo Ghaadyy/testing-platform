@@ -5,35 +5,33 @@ import { API_URL } from "@/main";
 import { LogGroup } from "@/models/Log";
 import { TestRun } from "@/models/TestRun";
 import { Button } from "@/shadcn/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, RefreshCcw } from "lucide-react";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 
-function useLogs(runId: string) {
-  const { token } = useContext(UserContext);
-  return useQuery<LogGroup[]>({
-    queryKey: ["logs"],
-    queryFn: async () => {
-      const res = await fetch(`${API_URL}/api/runs/${runId}/logs`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return await res.json();
-    },
-  });
-}
-
 function ViewRunScreen() {
+  const { token } = useContext(UserContext);
   const { runId, testId } = useParams();
 
   const { state } = useLocation();
   const navigate = useNavigate();
   const testRun: TestRun = state;
 
-  const { data, isLoading } = useLogs(runId!);
-  const [logs, setLogs] = useState<LogGroup[]>(data ?? []);
+  const [logs, setLogs] = useState<LogGroup[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch(`${API_URL}/api/runs/${runId}/logs`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const logs: LogGroup[] = await res.json();
+      setLogs(logs);
+      setIsLoading(false);
+    })();
+  }, [runId, token]);
 
   const onMessage = useCallback((logs: LogGroup[]) => setLogs(logs), []);
   const { rerun } = useTest(testId!, onMessage);

@@ -13,7 +13,6 @@ import { jwtDecode } from "jwt-decode";
 import RootLayout from "./layouts/RootLayout";
 import RunsScreen from "./screens/RunsScreen";
 import ViewRunScreen from "./screens/ViewRunScreen";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -70,25 +69,21 @@ function App() {
     { path: "/editor/:testId", element: authorize(<EditorScreen />) },
   ]);
 
-  const queryClient = new QueryClient();
-
   return (
     <DndProvider backend={HTML5Backend}>
       <ThemeProvider defaultTheme="dark">
-        <QueryClientProvider client={queryClient}>
-          <UserContext.Provider
-            value={{
-              user,
-              setUser,
-              token,
-              setToken,
-              isAuthenticated,
-              setIsAuthenticated,
-            }}
-          >
-            {authInitialized && <RouterProvider router={router} />}
-          </UserContext.Provider>
-        </QueryClientProvider>
+        <UserContext.Provider
+          value={{
+            user,
+            setUser,
+            token,
+            setToken,
+            isAuthenticated,
+            setIsAuthenticated,
+          }}
+        >
+          {authInitialized && <RouterProvider router={router} />}
+        </UserContext.Provider>
       </ThemeProvider>
     </DndProvider>
   );
