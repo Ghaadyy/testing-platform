@@ -105,6 +105,7 @@ public class TestExecutionService(
             CreateNoWindow = true,
         };
 
+        stopwatch.Start();
         using var process = Process.Start(dockerInfo);
         if (process is null)
         {
@@ -117,6 +118,7 @@ public class TestExecutionService(
             return (false, 0);
         }
         await process.WaitForExitAsync();
+        stopwatch.Stop();
 
         File.Delete(tempFilePath);
 
