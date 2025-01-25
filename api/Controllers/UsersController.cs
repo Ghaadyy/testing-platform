@@ -34,10 +34,10 @@ public class UsersController(
     [HttpGet("me")]
     public ActionResult<User> GetUserInfo()
     {
-        var userId = tokenService.GetId(User);
-        if (userId is null) return BadRequest("User ID missing from token");
+        var id = tokenService.GetId(User);
+        if (id is null) return BadRequest("User ID missing from token");
 
-        User? user = userRepository.GetUserById(userId.Value);
+        User? user = userRepository.GetUserById(id.Value);
         if (user is null) return NotFound("User not found");
 
         return Ok(user);
@@ -89,10 +89,10 @@ public class UsersController(
     [HttpPatch]
     public async Task<ActionResult<User>> Update([FromBody] JsonPatchDocument<User> patchDoc)
     {
-        var userId = tokenService.GetId(User);
-        if (userId is null) return BadRequest("User ID missing from token");
+        var id = tokenService.GetId(User);
+        if (id is null) return BadRequest("User ID missing from token");
 
-        User? user = userRepository.GetUserById(userId.Value);
+        User? user = userRepository.GetUserById(id.Value);
         if (user is null) return NotFound("Invalid user id.");
 
         patchDoc.ApplyTo(user);
@@ -111,10 +111,10 @@ public class UsersController(
 
     public async Task<ActionResult<User>> Delete()
     {
-        var userId = tokenService.GetId(User);
-        if (userId is null) return BadRequest("User ID missing from token");
+        var id = tokenService.GetId(User);
+        if (id is null) return BadRequest("User ID missing from token");
 
-        User? user = userRepository.GetUserById(userId.Value);
+        User? user = userRepository.GetUserById(id.Value);
         if (user is null) return NotFound("Invalid user id.");
 
         await userRepository.DeleteUser(user);
