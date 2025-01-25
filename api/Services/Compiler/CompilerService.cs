@@ -1,11 +1,14 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace RestrictedNL.Compiler;
+namespace RestrictedNL.Services.Compiler;
 
-public static class Parser
+public class CompilerService(
+    IConfiguration configuration,
+    IHttpContextAccessor accessor
+    )
 {
-    public static async Task<(string code, List<string> errors)> Parse(string code)
+    public async Task<(string code, List<string> errors)> Parse(string code)
     {
         var compInfo = new ProcessStartInfo
         {
@@ -43,8 +46,11 @@ public static class Parser
         return (compiledCode, errors.ToList());
     }
 
-    public static string ConfigureSeeClick(string code, string token, string url)
+    public string ConfigureSeeClick(string code)
     {
+        string url = configuration["ConnectionStrings:SeeClick"]!;
+        string token = accessor.HttpContext?.Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last()!;
+
         StringBuilder sb = new();
 
         sb.Append(Environment.NewLine);
@@ -62,7 +68,7 @@ public static class Parser
         return sb.ToString();
     }
 
-    public static string WrapWithSockets(string code, Guid processId)
+    public string ConfigureSockets(string code, Guid processId)
     {
         StringBuilder sb = new();
 

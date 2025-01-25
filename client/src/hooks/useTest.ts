@@ -1,59 +1,53 @@
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { LogGroup } from "@/models/Log";
-import { useContext, useEffect, useState } from "react";
-
-function makeEventSource(
-  url: string,
-  onMessage: (logs: LogGroup[]) => void
-): EventSource {
-  const eventSource = new EventSource(url);
-
-  eventSource.onopen = () => console.log("[SSE] Connection established.");
-
-  eventSource.onmessage = (event) => {
-    const { message, status } = JSON.parse(event.data);
-
-    if (status === "close") {
-      console.log("[SSE] Connection closed.");
-      eventSource.close();
-    } else {
-      onMessage(message);
-    }
-  };
-
-  eventSource.onerror = () => {
-    console.log("[SSE] An error occured.");
-    eventSource.close();
-  };
-
-  return eventSource;
-}
+import { useCallback, useContext, useEffect } from "react";
 
 export function useTest(fileId: string, onMessage: (logs: LogGroup[]) => void) {
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
   const { token } = useContext(UserContext);
 
-  function run() {
-    if (eventSource) eventSource.close();
+  const connect = useCallback(
+    async function (url: string) {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    setEventSource(
-      makeEventSource(
-        `${API_URL}/api/tests/${fileId}/run?token=${token}`,
-        onMessage
-      )
-    );
+      if (!res.ok) return;
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      const readStream = async () => {
+        if (reader === undefined) return;
+
+        const { value, done } = await reader.read();
+        if (done) return;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const { message, status } = JSON.parse(chunk);
+        if (status === "close") {
+          console.log("[SSE] Connection closed.");
+          return;
+        } else {
+          onMessage(message);
+        }
+        readStream();
+      };
+
+      readStream();
+    },
+    [onMessage, token]
+  );
+
+  function run() {
+    connect(`${API_URL}/api/tests/${fileId}/run`);
   }
 
   function rerun(runId: string) {
-    if (eventSource) eventSource.close();
-
-    setEventSource(
-      makeEventSource(
-        `${API_URL}/api/runs/${runId}/compiled/run?token=${token}`,
-        onMessage
-      )
-    );
+    connect(`${API_URL}/api/runs/${runId}/compiled/run`);
   }
 
   // Try to reconnect to an existing test
@@ -73,17 +67,12 @@ export function useTest(fileId: string, onMessage: (logs: LogGroup[]) => void) {
       }
     };
 
-    setEventSource(
-      makeEventSource(
-        `${API_URL}/api/tests/${fileId}/reconnect?token=${token}`,
-        onMessage
-      )
-    );
+    connect(`${API_URL}/api/tests/${fileId}/reconnect`);
 
     return () => {
       cleanup();
     };
-  }, [fileId, token, onMessage]);
+  }, [fileId, token, onMessage, connect]);
 
   return { run, rerun };
 }

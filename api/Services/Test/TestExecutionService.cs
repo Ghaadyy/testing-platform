@@ -1,24 +1,24 @@
 using System.Diagnostics;
-using RestrictedNL.Compiler;
 using RestrictedNL.Models.Logs;
 using RestrictedNL.Models.Test;
 using RestrictedNL.Services.Http;
 using RestrictedNL.Repository.Test;
 using RestrictedNL.Services.Redis;
+using RestrictedNL.Services.Compiler;
 
 namespace RestrictedNL.Services.Test;
 
 public class TestExecutionService(
     ITestRepository testRepository,
     HttpService httpService,
-    IConfiguration configuration,
     RedisProcessService processService,
-    RedisLogService logService
+    RedisLogService logService,
+    CompilerService compilerService
     )
 {
-    public async Task RunTestAsync(TestFile testFile, string token)
+    public async Task RunAsync(TestFile file)
     {
-        var (code, errors) = await Parser.Parse(testFile.Content);
+        var (code, errors) = await compilerService.Parse(file.Content);
         var group = new LogGroup
         {
             TestName = "Compiled succesfully",
@@ -38,36 +38,31 @@ public class TestExecutionService(
                     Passed = false
                 });
 
-            await httpService.SendSseMessage(testFile.UserId, testFile.Id, [group]);
+            await httpService.SendSseMessage(file.UserId, file.Id, [group]);
             return;
         }
 
-        await httpService.SendSseMessage(testFile.UserId, testFile.Id, [group]);
+        await httpService.SendSseMessage(file.UserId, file.Id, [group]);
 
-        await HandleTestExecutionAsync(testFile.Id, testFile.UserId, code, testFile.Content, token);
+        await ExecuteAsync(file.Id, file.UserId, code, file.Content);
     }
 
-    public async Task RunCompiledTestAsync(Guid userId, TestRun testRun, string rawCode, string token)
+    public async Task RunCompiledAsync(Guid userId, TestRun run)
     {
-        string seleniumCode = testRun.CompiledCode;
-        await HandleTestExecutionAsync(testRun.FileId, userId, seleniumCode, rawCode, token);
+        await ExecuteAsync(run.FileId, userId, run.CompiledCode, run.RawCode);
     }
 
-    private async Task HandleTestExecutionAsync(Guid fileId, Guid userId, string seleniumCode, string rawCode, string token)
+    private async Task ExecuteAsync(Guid fileId, Guid userId, string seleniumCode, string rawCode)
     {
-        string tempFilePath = Path.GetTempFileName() + ".js";
+        string path = Path.GetTempFileName() + ".js";
 
         Guid processId = Guid.NewGuid();
-        string wrappedSockets = Parser.WrapWithSockets(seleniumCode, processId);
-        string wrappedSeeClick = Parser.ConfigureSeeClick(
-            wrappedSockets,
-            token,
-            configuration["ConnectionStrings:SeeClick"]!
-        );
+        string wrapped = compilerService.ConfigureSockets(seleniumCode, processId);
+        wrapped = compilerService.ConfigureSeeClick(wrapped);
 
-        File.WriteAllText(tempFilePath, wrappedSeeClick);
+        File.WriteAllText(path, wrapped);
 
-        var (Success, Duration) = await RunTestProcessAsync(processId, userId, fileId, tempFilePath);
+        var (Success, Duration) = await StartProcessAsync(processId, userId, fileId, path);
         var key = new LogKey(userId, fileId);
         //Send close message for user to gracefully stop
         await httpService.SendSseMessage(userId, fileId, [], "close");
@@ -88,7 +83,7 @@ public class TestExecutionService(
         await logService.Remove(key);
     }
 
-    private async Task<(bool Success, long Duration)> RunTestProcessAsync(Guid processId, Guid userId, Guid fileId, string tempFilePath)
+    private async Task<(bool Success, long Duration)> StartProcessAsync(Guid processId, Guid userId, Guid fileId, string path)
     {
         //Add process to repo
         await processService.Add(processId, userId, fileId);
@@ -100,7 +95,7 @@ public class TestExecutionService(
         var dockerInfo = new ProcessStartInfo
         {
             FileName = "docker",
-            Arguments = $"run --rm -v \"{tempFilePath}:/app/script.js\" test-environment mocha /app/script.js",
+            Arguments = $"run --rm -v \"{path}:/app/script.js\" test-environment mocha /app/script.js",
             UseShellExecute = false,
             CreateNoWindow = true,
         };
@@ -109,7 +104,7 @@ public class TestExecutionService(
         using var process = Process.Start(dockerInfo);
         if (process is null)
         {
-            File.Delete(tempFilePath);
+            File.Delete(path);
             await httpService.SendSseMessage(userId, fileId, [new LogGroup
             {
                 TestName = "Failed to start Selenium process.",
@@ -120,7 +115,7 @@ public class TestExecutionService(
         await process.WaitForExitAsync();
         stopwatch.Stop();
 
-        File.Delete(tempFilePath);
+        File.Delete(path);
 
         if (process.ExitCode != 0)
         {

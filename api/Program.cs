@@ -10,6 +10,7 @@ using RestrictedNL.Services.Token;
 using RestrictedNL.Repository.User;
 using RestrictedNL.Services.Http;
 using RestrictedNL.Services.Test;
+using RestrictedNL.Services.Compiler;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ builder.Services.AddCors();
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 
+builder.Services.AddHttpContextAccessor();
+
 // Register repositories
 builder.Services.AddScoped<ITestRepository, TestRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -32,6 +35,7 @@ builder.Services.AddScoped<TestExecutionService>();
 builder.Services.AddScoped<RedisLogService>();
 builder.Services.AddScoped<RedisProcessService>();
 builder.Services.AddSingleton<HttpService>();
+builder.Services.AddSingleton<CompilerService>();
 
 builder.Services.AddDbContext<TestContext>(options =>
 {

@@ -18,13 +18,7 @@ public class HttpService
     public HttpResponse? Get(Guid userId, Guid fileId)
     {
         LogKey key = new(userId, fileId);
-
-        if (ActiveConnections.TryGetValue(key, out var response))
-        {
-            return response;
-        }
-
-        return null;
+        return ActiveConnections.GetValueOrDefault(key);
     }
 
     public void Remove(Guid userId, Guid fileId)
@@ -48,11 +42,9 @@ public class HttpService
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
 
-            var data = $"data: {sseObject}\n\n";
+            await response.WriteAsync(sseObject);
 
-            await response.WriteAsync(data);
-
-            Console.WriteLine(data);
+            Console.WriteLine(sseObject);
 
             await response.Body.FlushAsync();
         }
