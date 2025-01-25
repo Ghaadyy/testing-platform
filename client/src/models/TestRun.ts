@@ -4,5 +4,12 @@ export type TestRun = {
   compiledCode: string;
   rawCode: string;
   duration: bigint;
-  passed: boolean;
+  status: LogStatus;
 };
+
+
+export enum LogStatus {
+  PASSED = 0,
+  PENDING = 1,
+  FAILED = 2,
+}

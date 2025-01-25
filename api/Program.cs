@@ -34,6 +34,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<TestExecutionService>();
 builder.Services.AddScoped<RedisLogService>();
 builder.Services.AddScoped<RedisProcessService>();
+builder.Services.AddScoped<RedisRunService>();
 builder.Services.AddSingleton<HttpService>();
 builder.Services.AddSingleton<CompilerService>();
 

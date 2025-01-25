@@ -3,7 +3,7 @@ import { Button } from "@/shadcn/components/ui/button";
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 import { DataTable } from "./DataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import { Binoculars, CircleCheck, CircleX, MoreHorizontal } from "lucide-react";
+import { Binoculars, CircleCheck, CircleX, Loader2Icon, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,11 +64,13 @@ function TestRunTable({ testId, testRuns }: Props) {
       accessorKey: "passed",
       header: sortHeader("Passed"),
       cell: ({ row }) =>
-        row.original.passed ? (
+        row.original.status === 0 ? (
           <CircleCheck color="green" />
-        ) : (
+        ) : row.original.status === 2 ? (
           <CircleX color="red" />
-        ),
+        ) : (
+          <Loader2Icon className="animate-spin" color="yellow" />
+        )
     },
     {
       id: "rerun",

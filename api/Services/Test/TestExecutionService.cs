@@ -2,21 +2,20 @@ using System.Diagnostics;
 using RestrictedNL.Models.Logs;
 using RestrictedNL.Models.Test;
 using RestrictedNL.Services.Http;
-using RestrictedNL.Repository.Test;
 using RestrictedNL.Services.Redis;
 using RestrictedNL.Services.Compiler;
 
 namespace RestrictedNL.Services.Test;
 
 public class TestExecutionService(
-    ITestRepository testRepository,
     HttpService httpService,
     RedisProcessService processService,
     RedisLogService logService,
-    CompilerService compilerService
+    CompilerService compilerService,
+    RedisRunService runService
     )
 {
-    public async Task RunAsync(TestFile file)
+    public async Task<List<LogGroup>> RunAsync(TestFile file)
     {
         var (code, errors) = await compilerService.Parse(file.Content);
         var group = new LogGroup
@@ -37,19 +36,16 @@ public class TestExecutionService(
                     Message = err,
                     Passed = false
                 });
-
-            await httpService.SendSseMessage(file.UserId, file.Id, [group]);
-            return;
         }
 
-        await httpService.SendSseMessage(file.UserId, file.Id, [group]);
+        _ = Task.Run(() => ExecuteAsync(file.Id, file.UserId, code, file.Content));
 
-        await ExecuteAsync(file.Id, file.UserId, code, file.Content);
+        return [group];
     }
 
-    public async Task RunCompiledAsync(Guid userId, TestRun run)
+    public void RunCompiledAsync(Guid userId, TestRun run)
     {
-        await ExecuteAsync(run.FileId, userId, run.CompiledCode, run.RawCode);
+        _ = Task.Run(() => ExecuteAsync(run.FileId, userId, run.CompiledCode, run.RawCode));
     }
 
     private async Task ExecuteAsync(Guid fileId, Guid userId, string seleniumCode, string rawCode)
@@ -62,31 +58,27 @@ public class TestExecutionService(
 
         File.WriteAllText(path, wrapped);
 
-        var (Success, Duration) = await StartProcessAsync(processId, userId, fileId, path);
-        var key = new LogKey(userId, fileId);
-        //Send close message for user to gracefully stop
-        await httpService.SendSseMessage(userId, fileId, [], "close");
-
+        //Save run to redis
         Guid runId = Guid.NewGuid();
-        await testRepository.UploadTestRun(new TestRun
-        {
-            Id = runId,
-            FileId = fileId,
-            Passed = Success,
-            RanAt = DateTime.UtcNow,
-            Duration = Duration,
-            CompiledCode = seleniumCode,
-            RawCode = rawCode
-        });
+        await runService.AddRun(userId, runId, fileId, seleniumCode, rawCode);
 
+        var (Success, Duration) = await StartProcessAsync(processId, userId, runId, path);
+        var key = new LogKey(userId, runId);
+
+        //Send close message for user to gracefully stop
+        await httpService.SendSseMessage(userId, runId, [], "close");
+
+        //Upload run and logs to database
+        await runService.Save(userId, runId, Success ? RunStatus.PASSED : RunStatus.FAILED, Duration);
+        await runService.Remove(userId, runId);
         await logService.Save(key, runId);
         await logService.Remove(key);
     }
 
-    private async Task<(bool Success, long Duration)> StartProcessAsync(Guid processId, Guid userId, Guid fileId, string path)
+    private async Task<(bool Success, long Duration)> StartProcessAsync(Guid processId, Guid userId, Guid runId, string path)
     {
         //Add process to repo
-        await processService.Add(processId, userId, fileId);
+        await processService.Add(processId, userId, runId);
 
         Stopwatch stopwatch = new();
 
@@ -100,16 +92,19 @@ public class TestExecutionService(
             CreateNoWindow = true,
         };
 
+        LogKey key = new(userId, runId);
+
         stopwatch.Start();
         using var process = Process.Start(dockerInfo);
         if (process is null)
         {
             File.Delete(path);
-            await httpService.SendSseMessage(userId, fileId, [new LogGroup
+            await logService.AddLogGroup(key, new LogGroup
             {
                 TestName = "Failed to start Selenium process.",
                 Status = LogStatus.FINISHED,
-            }]);
+            });
+            await httpService.SendSseMessage(userId, runId, await logService.Get(key));
             return (false, 0);
         }
         await process.WaitForExitAsync();
@@ -119,11 +114,12 @@ public class TestExecutionService(
 
         if (process.ExitCode != 0)
         {
-            await httpService.SendSseMessage(userId, fileId, [new LogGroup
+            await logService.AddLogGroup(key, new LogGroup
             {
                 TestName = $"Process terminated unexpectedly with exit code {process.ExitCode}",
-                Status = LogStatus.FINISHED
-            }]);
+                Status = LogStatus.FINISHED,
+            });
+            await httpService.SendSseMessage(userId, runId, await logService.Get(key));
         }
 
         return (process.ExitCode == 0, stopwatch.ElapsedMilliseconds);

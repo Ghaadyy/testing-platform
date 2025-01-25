@@ -11,7 +11,7 @@ import { useLocation, useNavigate, useParams } from "react-router";
 
 function ViewRunScreen() {
   const { token } = useContext(UserContext);
-  const { runId, testId } = useParams();
+  const { runId } = useParams();
 
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -20,21 +20,41 @@ function ViewRunScreen() {
   const [logs, setLogs] = useState<LogGroup[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const onMessage = useCallback((logs: LogGroup[]) => setLogs(logs), []);
+  const { getLiveUpdates } = useTest(onMessage);
+
   useEffect(() => {
-    (async () => {
-      const res = await fetch(`${API_URL}/api/runs/${runId}/logs`, {
+    if(testRun.status !== 1){
+      (async () => {
+        const res = await fetch(`${API_URL}/api/runs/${runId}/logs`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const logs: LogGroup[] = await res.json();
+        setLogs(logs);
+        setIsLoading(false);
+      })();
+    }else{
+      getLiveUpdates(runId!);
+      setIsLoading(false);
+    }
+  }, [runId, token]);
+
+  const initiateRerun = async () => {
+    const res = await fetch(`${API_URL}/api/runs/${runId}/compiled/run`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const logs: LogGroup[] = await res.json();
-      setLogs(logs);
-      setIsLoading(false);
-    })();
-  }, [runId, token]);
+    
+    if(res.ok){
+      //Toast to the user that rerun was successfull or something
+    }else{
+      console.log(await res.json())
+    }
+  }
 
-  const onMessage = useCallback((logs: LogGroup[]) => setLogs(logs), []);
-  const { rerun } = useTest(testId!, onMessage);
 
   return (
     <div className="h-screen w-screen p-5">
@@ -50,7 +70,8 @@ function ViewRunScreen() {
         <Button
           className="flex flex-row gap-3"
           variant="ghost"
-          onClick={() => rerun(runId!)}
+          onClick={() => initiateRerun()}
+          disabled={testRun.status === 1}
         >
           <RefreshCcw /> Replay test
         </Button>

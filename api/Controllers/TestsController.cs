@@ -1,13 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using RestrictedNL.Services.Redis;
-using RestrictedNL.Models.Logs;
 using RestrictedNL.Services.Test;
 using RestrictedNL.Repository.Test;
 using RestrictedNL.Services.Token;
 using RestrictedNL.Models.Test;
-using RestrictedNL.Services.Http;
 
 namespace RestrictedNL.Controllers;
 
@@ -18,8 +15,7 @@ public class TestsController(
     ITestRepository testRepository,
     TestExecutionService executionService,
     ITokenService tokenService,
-    HttpService httpService,
-    RedisLogService logService
+    RedisRunService runService
     ) : ControllerBase
 {
     [HttpGet]
@@ -92,84 +88,23 @@ public class TestsController(
         var file = testRepository.GetTestFile(fileId, id.Value);
         if (file is null) return NotFound("Could not find test file");
 
-        var key = new LogKey(id.Value, file.Id);
-        var logs = await logService.Get(key);
-        if (!logs.IsNullOrEmpty()) return BadRequest("There is a test already running.");
+        var groups = await executionService.RunAsync(file);
 
-        SetSSEHeaders(Response);
-
-        httpService.Add(id.Value, file.Id, Response);
-
-        await executionService.RunAsync(file);
-
-        httpService.Remove(id.Value, file.Id);
-
-        return new EmptyResult();
+        return Ok(groups);
     }
 
     [HttpGet("{fileId}/runs")]
-    public ActionResult<List<TestRun>> GetTestsRuns(Guid fileId)
+    public async Task<ActionResult<List<TestRun>>> GetTestsRuns(Guid fileId)
     {
         var id = tokenService.GetId(User);
-        if (id == null) return Unauthorized("User is not authorized");
+        if (id is null) return Unauthorized("User is not authorized");
 
         var file = testRepository.GetTestFile(fileId, id.Value);
         if (file is null) return NotFound("Could not find test file");
 
         var runs = testRepository.GetTestRuns(file.Id);
-        if (runs is null) return NotFound("Tests runs not found");
+        runs.AddRange(await runService.Get(id.Value, fileId));
 
         return Ok(runs);
-    }
-
-    [HttpGet("{fileId}/reconnect")]
-    public async Task<ActionResult> Reconnect(Guid fileId)
-    {
-        var id = tokenService.GetId(User);
-        if (id is null) return Unauthorized("User is unauthorized");
-
-        var file = testRepository.GetTestFile(fileId, id.Value);
-        if (file is null) return NotFound("Could not find test file");
-
-        var key = new LogKey(id.Value, file.Id);
-        var logs = await logService.Get(key);
-        if (logs.IsNullOrEmpty()) return BadRequest("No running test to reconnect.");
-
-        SetSSEHeaders(Response);
-        httpService.Add(id.Value, file.Id, Response);
-        await httpService.SendSseMessage(id.Value, file.Id, logs);
-
-        try
-        {
-            while (httpService.Get(id.Value, file.Id) is not null)
-                await Task.Delay(1000);
-        }
-        finally
-        {
-            httpService.Remove(id.Value, file.Id);
-        }
-
-        return new EmptyResult();
-    }
-
-    [HttpPost("{fileId}/cleanup")]
-    public ActionResult CleanupSSE(Guid fileId)
-    {
-        var id = tokenService.GetId(User);
-        if (id == null) return Unauthorized("User is not authorized");
-
-        var file = testRepository.GetTestFile(fileId, id.Value);
-        if (file is null) return NotFound("Could not find test file");
-
-        httpService.Remove(id.Value, file.Id);
-
-        return NoContent();
-    }
-
-    private static void SetSSEHeaders(HttpResponse response)
-    {
-        response.ContentType = "text/event-stream";
-        response.Headers.CacheControl = "no-cache";
-        response.Headers.Connection = "keep-alive";
     }
 }

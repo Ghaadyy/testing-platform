@@ -17,9 +17,9 @@ namespace RestrictedNL.Controllers;
 public class RunsController(
     ITestRepository testRepository,
     ITokenService tokenService,
-    RedisLogService logService,
+    TestExecutionService executionService,
     HttpService httpService,
-    TestExecutionService executionService
+    RedisLogService logService
     ) : ControllerBase
 {
 
@@ -37,7 +37,7 @@ public class RunsController(
     }
 
     [HttpGet("{runId}/compiled/run")]
-    public async Task<IActionResult> RunCompiled(Guid runId)
+    public IActionResult RunCompiled(Guid runId)
     {
         var id = tokenService.GetId(User);
         if (id is null) return Unauthorized("User is unauthorized");
@@ -48,18 +48,34 @@ public class RunsController(
         var file = testRepository.GetTestFile(run.FileId, id.Value);
         if (file is null) return NotFound("Test file not found for this run");
 
-        var key = new LogKey(id.Value, file.Id);
+        executionService.RunCompiledAsync(id.Value, run);
 
+        return Ok("Rerun succesfull");
+    }
+
+    [HttpGet("{runId}/connect")]
+    public async Task<ActionResult> Connect(Guid runId)
+    {
+        var id = tokenService.GetId(User);
+        if (id is null) return Unauthorized("User is unauthorized");
+
+        var key = new LogKey(id.Value, runId);
         var logs = await logService.Get(key);
-        if (!logs.IsNullOrEmpty()) return BadRequest("There is a test already running.");
+        if (logs.IsNullOrEmpty()) return BadRequest("No logs");
 
         SetSSEHeaders(Response);
+        httpService.Add(id.Value, runId, Response);
+        await httpService.SendSseMessage(id.Value, runId, logs);
 
-        httpService.Add(id.Value, run.FileId, Response);
-
-        await executionService.RunCompiledAsync(id.Value, run);
-
-        httpService.Remove(id.Value, run.FileId);
+        try
+        {
+            while (httpService.Get(id.Value, runId) is not null)
+                await Task.Delay(1000);
+        }
+        finally
+        {
+            httpService.Remove(id.Value, runId);
+        }
 
         return new EmptyResult();
     }
