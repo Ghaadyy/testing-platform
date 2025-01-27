@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RestrictedNL.Models.Logs;
 
-public record LogKey(Guid UserId, Guid FileId)
+public record LogKey(Guid UserId, Guid RunId)
 {
-    public override string ToString() => $"Logs_{UserId}:{FileId}";
+    public override string ToString() => $"Logs_{UserId}:{RunId}";
 };
 
 [Table("log_groups")]
@@ -31,5 +31,6 @@ public record LogGroup
 public enum LogStatus
 {
     LOADING = 0,
-    FINISHED = 1
+    PASSED = 1,
+    FAILED = 2
 }

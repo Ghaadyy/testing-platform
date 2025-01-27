@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -17,11 +18,24 @@ namespace RestrictedNL.Controllers;
 public class RunsController(
     ITestRepository testRepository,
     ITokenService tokenService,
-    RedisLogService logService,
+    TestExecutionService executionService,
     HttpService httpService,
-    TestExecutionService executionService
+    RedisLogService logService,
+    RedisRunService runService
     ) : ControllerBase
 {
+    [HttpGet("{runId}")]
+    public ActionResult<TestRun> GetRun(Guid runId)
+    {
+        var id = tokenService.GetId(User);
+        if (id is null) return Unauthorized("User is not authorized");
+
+        var run = testRepository.GetTestRun(runId);
+        if (run is null) return NotFound("Could not find test run");
+
+        return Ok(run);
+    }
+
 
     [HttpGet("{runId}/logs")]
     public ActionResult<List<TestRun>> GetRunLogs(Guid runId)
@@ -48,18 +62,29 @@ public class RunsController(
         var file = testRepository.GetTestFile(run.FileId, id.Value);
         if (file is null) return NotFound("Test file not found for this run");
 
-        var key = new LogKey(id.Value, file.Id);
+        var newRun = await executionService.RunCompiledAsync(id.Value, run);
 
+        return Ok(newRun);
+    }
+
+    [HttpGet("{runId}/connect")]
+    public async Task<ActionResult> Connect(Guid runId)
+    {
+        var id = tokenService.GetId(User);
+        if (id is null) return Unauthorized("User is unauthorized");
+
+        var run = await runService.Get(id.Value, runId);
+        if (run is null) return BadRequest("Invalid run id");
+
+        var key = new LogKey(id.Value, runId);
         var logs = await logService.Get(key);
-        if (!logs.IsNullOrEmpty()) return BadRequest("There is a test already running.");
 
         SetSSEHeaders(Response);
+        httpService.Add(id.Value, runId, Response);
+        await httpService.SendSseMessage(id.Value, runId, logs);
 
-        httpService.Add(id.Value, run.FileId, Response);
-
-        await executionService.RunCompiledAsync(id.Value, run);
-
-        httpService.Remove(id.Value, run.FileId);
+        while (httpService.Get(id.Value, runId) == Response && !Response.HttpContext.RequestAborted.IsCancellationRequested)
+            await Task.Delay(1000);
 
         return new EmptyResult();
     }

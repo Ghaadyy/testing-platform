@@ -1,12 +1,6 @@
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/shadcn/components/ui/resizable";
 import { Editor as MonacoEditor } from "@monaco-editor/react";
 import { useContext, useEffect, useState } from "react";
 import { EditorContext } from "@/context/EditorContext";
-import TestLogs from "./TestLogs";
 import TestCreator from "./TestCreator";
 import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
@@ -17,10 +11,6 @@ import { toast } from "@/shadcn/hooks/use-toast";
 import { TestFile } from "@/models/TestFile";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
-import { LogGroup } from "@/models/Log";
-import { Card } from "@/shadcn/components/ui/card";
-
-type Props = { logs: LogGroup[] };
 
 async function openDocument(
   fileId: string,
@@ -46,7 +36,7 @@ async function openDocument(
   }
 }
 
-function Editor({ logs }: Props) {
+function Editor() {
   const { code, setCode, tests, setTests, isCode, setIsCode, fileId } =
     useContext(EditorContext);
   const { token } = useContext(UserContext);
@@ -87,46 +77,37 @@ function Editor({ logs }: Props) {
   }, [fileId, setCode, setTests, token]);
 
   return (
-    <ResizablePanelGroup direction="vertical">
-      <ResizablePanel className="flex flex-col gap-3 py-3" defaultSize={80}>
-        <div className="flex flex-row gap-3 items-center">
-          <Switch
-            id="code-toggle"
-            checked={isCode}
-            onCheckedChange={handleEditorSwitch}
-          />
-          <Label htmlFor="code-toggle">
-            {isCode ? "Use visual editor" : "Use code editor"}
-          </Label>
-        </div>
-        {isCode ? (
-          <MonacoEditor
-            height="100%"
-            options={{
-              minimap: {
-                enabled: false,
-              },
-              fontSize: 14,
-            }}
-            language={"rnl"}
-            className="editor-wrapper"
-            theme={"rnl-theme"}
-            value={code}
-            onChange={(c) => setCode(c ?? "")}
-            beforeMount={setupEditor}
-          />
-        ) : (
-          <TestCreator statementId={statementId} />
-        )}
-      </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={20} className="py-3">
-        <Card className="p-4 flex flex-col gap-3 h-full w-full">
-          <h1 className="font-bold text-2xl">Logs</h1>
-          <TestLogs logs={logs} />
-        </Card>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+    <div className="w-full h-full flex flex-col gap-3 py-3">
+      <div className="flex flex-row gap-3 items-center">
+        <Switch
+          id="code-toggle"
+          checked={isCode}
+          onCheckedChange={handleEditorSwitch}
+        />
+        <Label htmlFor="code-toggle">
+          {isCode ? "Use visual editor" : "Use code editor"}
+        </Label>
+      </div>
+      {isCode ? (
+        <MonacoEditor
+          height="100%"
+          options={{
+            minimap: {
+              enabled: false,
+            },
+            fontSize: 14,
+          }}
+          language={"rnl"}
+          className="editor-wrapper"
+          theme={"rnl-theme"}
+          value={code}
+          onChange={(c) => setCode(c ?? "")}
+          beforeMount={setupEditor}
+        />
+      ) : (
+        <TestCreator statementId={statementId} />
+      )}
+    </div>
   );
 }
 

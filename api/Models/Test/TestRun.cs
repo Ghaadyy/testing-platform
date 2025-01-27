@@ -26,6 +26,13 @@ public record TestRun
     [Column("duration")]
     public required long Duration { get; set; }
 
-    [Column("passed")]
-    public required bool Passed { get; set; }
+    [Column("status")]
+    public required RunStatus Status { get; set; }
+}
+
+public enum RunStatus
+{
+    PASSED = 0,
+    PENDING = 1,
+    FAILED = 2
 }

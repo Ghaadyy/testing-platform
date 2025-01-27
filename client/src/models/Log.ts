@@ -7,7 +7,8 @@ export type Assertion = {
 
 export enum LogStatus {
   LOADING = 0,
-  FINISHED = 1,
+  PASSED = 1,
+  FAILED = 2,
 }
 
 export type LogGroup = {

@@ -62,5 +62,5 @@ public class RedisLogService(IDistributedCache cache, TestContext context)
         await context.SaveChangesAsync();
     }
 
-    public async Task Remove(LogKey key) => await _cache.RemoveAsync(key?.ToString() ?? "");
+    public async Task Remove(LogKey key) => await _cache.RemoveAsync(key.ToString());
 }

@@ -1,9 +1,9 @@
+import TableLoader from "@/components/TableLoader";
 import TestRunTable from "@/components/TestRunTable";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { TestFile } from "@/models/TestFile";
 import { TestRun } from "@/models/TestRun";
-import { Loader2Icon } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router";
 
@@ -52,11 +52,13 @@ function RunsScreen() {
   return (
     <div className="py-5">
       {!testFile ? (
-        <Loader2Icon className="animate-spin" />
+        <TableLoader />
       ) : (
-        <h1 className="font-bold text-3xl">{testFile.name}</h1>
+        <>
+          <h1 className="font-bold text-3xl">{testFile.name}</h1>
+          <TestRunTable testRuns={testRuns} />
+        </>
       )}
-      <TestRunTable testRuns={testRuns} testId={testId!} />
     </div>
   );
 }

@@ -127,7 +127,7 @@ public class CompilerService(
         async function afterEachHook() {{
             sendAssert(socket, {{
                 testName: this.currentTest.title,
-                status: 1
+                status: this.currentTest.state === 'passed' ? 1 : 2
             }});
 
             await sleep(2000);

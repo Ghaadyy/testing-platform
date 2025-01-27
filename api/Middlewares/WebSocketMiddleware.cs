@@ -65,7 +65,7 @@ public class WebSocketMiddleware(RequestDelegate next)
                         logger.LogInformation("Message did not match any expected types");
                     }
 
-                    await httpService.SendSseMessage(key.UserId, key.FileId, await logService.Get(key));
+                    await httpService.SendSseMessage(key.UserId, key.RunId, await logService.Get(key));
                 }
             }
         }
