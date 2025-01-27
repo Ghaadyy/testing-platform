@@ -3,13 +3,13 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/shadcn/components/ui/resizable";
-import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 
 import Editor from "@monaco-editor/react";
 import { setupEditor } from "@/utils/setupEditor";
 import { LogGroup } from "@/models/Log";
-import { Card } from "@/shadcn/components/ui/card";
 import TestLogs from "./TestLogs";
+import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
+import { Card, CardContent, CardTitle } from "@/shadcn/components/ui/card";
 
 type Props = {
   code: string;
@@ -18,8 +18,11 @@ type Props = {
 
 function ReadOnlyEditor({ code, logs }: Props) {
   return (
-    <ResizablePanelGroup direction="vertical" className="h-full w-full">
-      <ResizablePanel className="flex flex-col gap-3 py-3" defaultSize={80}>
+    <ResizablePanelGroup
+      direction="horizontal"
+      className="h-full w-full rounded-lg"
+    >
+      <ResizablePanel className="flex flex-col gap-3 px-3" defaultSize={50}>
         <Editor
           height="100%"
           options={{
@@ -37,17 +40,17 @@ function ReadOnlyEditor({ code, logs }: Props) {
         />
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={20} className="py-3">
-        <Card className="p-4 flex flex-col gap-3">
-          <h1 className="font-bold text-2xl">Logs</h1>
+      <ResizablePanel defaultSize={50} className="px-3 w-full">
+        <Card className="flex flex-col gap-4 h-full">
+          <CardTitle className="font-bold text-2xl px-4 pt-4">Logs</CardTitle>
           <ScrollArea>
-            {Object.keys(logs).length === 0 ? (
-              <p>No test logs for this run!</p>
-            ) : (
-              <div className="flex flex-col gap-3">
+            <CardContent className="px-4">
+              {Object.keys(logs).length === 0 ? (
+                <p>No test logs for this run!</p>
+              ) : (
                 <TestLogs logs={logs} />
-              </div>
-            )}
+              )}
+            </CardContent>
           </ScrollArea>
         </Card>
       </ResizablePanel>

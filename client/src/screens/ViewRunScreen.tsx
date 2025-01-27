@@ -1,10 +1,12 @@
+import EditorLoader from "@/components/EditorLoader";
 import ReadOnlyEditor from "@/components/ReadOnlyEditor";
 import { UserContext } from "@/context/UserContext";
 import { useTest } from "@/hooks/useTest";
 import { API_URL } from "@/main";
 import { LogGroup } from "@/models/Log";
-import { TestRun } from "@/models/TestRun";
+import { RunStatus, TestRun } from "@/models/TestRun";
 import { Button } from "@/shadcn/components/ui/button";
+
 import { ChevronLeft, RefreshCcw } from "lucide-react";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -21,10 +23,10 @@ function ViewRunScreen() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const onMessage = useCallback((logs: LogGroup[]) => setLogs(logs), []);
-  const { getLiveUpdates } = useTest(onMessage);
+  const { getLiveUpdates, rerun } = useTest(onMessage);
 
   useEffect(() => {
-    if(testRun.status !== 1){
+    if (testRun.status !== RunStatus.PENDING) {
       (async () => {
         const res = await fetch(`${API_URL}/api/runs/${runId}/logs`, {
           headers: {
@@ -35,29 +37,14 @@ function ViewRunScreen() {
         setLogs(logs);
         setIsLoading(false);
       })();
-    }else{
+    } else {
       getLiveUpdates(runId!);
       setIsLoading(false);
     }
-  }, [runId, token]);
-
-  const initiateRerun = async () => {
-    const res = await fetch(`${API_URL}/api/runs/${runId}/compiled/run`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    
-    if(res.ok){
-      //Toast to the user that rerun was successfull or something
-    }else{
-      console.log(await res.json())
-    }
-  }
-
+  }, []);
 
   return (
-    <div className="h-screen w-screen p-5">
+    <div className="h-screen w-screen p-5 flex flex-col gap-3">
       <div className="flex flex-row justify-between">
         <Button
           className="flex flex-row gap-3"
@@ -70,14 +57,14 @@ function ViewRunScreen() {
         <Button
           className="flex flex-row gap-3"
           variant="ghost"
-          onClick={() => initiateRerun()}
+          onClick={() => rerun(runId!)}
           disabled={testRun.status === 1}
         >
           <RefreshCcw /> Replay test
         </Button>
       </div>
       {isLoading ? (
-        <h1>Loading...</h1>
+        <EditorLoader />
       ) : (
         <ReadOnlyEditor code={testRun.rawCode} logs={logs} />
       )}

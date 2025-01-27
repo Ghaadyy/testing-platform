@@ -3,7 +3,13 @@ import { Button } from "@/shadcn/components/ui/button";
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
 import { DataTable } from "./DataTable";
 import { ColumnDef } from "@tanstack/react-table";
-import { Binoculars, CircleCheck, CircleX, Loader2Icon, MoreHorizontal } from "lucide-react";
+import {
+  Binoculars,
+  CircleCheck,
+  CircleX,
+  Loader2Icon,
+  MoreHorizontal,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +21,9 @@ import {
 import { useNavigate } from "react-router";
 import { sortHeader } from "@/utils/sortHeader";
 
-type Props = {
-  testId: string;
-  testRuns: TestRun[];
-};
+type Props = { testRuns: TestRun[] };
 
-function TestRunTable({ testId, testRuns }: Props) {
+function TestRunTable({ testRuns }: Props) {
   const navigate = useNavigate();
 
   function Actions({ run }: { run: TestRun }) {
@@ -37,7 +40,7 @@ function TestRunTable({ testId, testRuns }: Props) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() =>
-              navigate(`/tests/${testId}/runs/${run.id}`, {
+              navigate(`/runs/${run.id}`, {
                 state: run,
               })
             }
@@ -70,7 +73,7 @@ function TestRunTable({ testId, testRuns }: Props) {
           <CircleX color="red" />
         ) : (
           <Loader2Icon className="animate-spin" color="yellow" />
-        )
+        ),
     },
     {
       id: "rerun",

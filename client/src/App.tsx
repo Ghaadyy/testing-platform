@@ -27,7 +27,7 @@ function App() {
       ],
     },
     {
-      path: "/tests/:testId/runs/:runId",
+      path: "/runs/:runId",
       element: authorize(<ViewRunScreen />),
     },
     { path: "/auth/login", element: anonymous(<LoginScreen />) },

@@ -1,4 +1,5 @@
 import FilesTable from "@/components/FilesTable";
+import TableLoader from "@/components/TableLoader";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { TestFile } from "@/models/TestFile";
@@ -28,7 +29,7 @@ function useTests() {
 function HomeScreen() {
   const { tests, isLoading } = useTests();
 
-  return isLoading ? <h1>Loading...</h1> : <FilesTable tests={tests!} />;
+  return isLoading ? <TableLoader /> : <FilesTable tests={tests!} />;
 }
 
 export default HomeScreen;
