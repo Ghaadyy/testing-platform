@@ -49,6 +49,17 @@ public class RedisRunService(IDistributedCache cache, ITestRepository testReposi
         return testRuns;
     }
 
+    public async Task<TestRun?> GetRun(Guid userId, Guid runId)
+    {
+        string cacheKey = GetKey(userId);
+
+        var cachedItem = await _cache.GetStringAsync(cacheKey);
+        if (string.IsNullOrEmpty(cachedItem)) return null;
+        var run = (JsonConvert.DeserializeObject<List<TestRun>>(cachedItem) ?? [])
+                        .Find(run => run.Id == runId);
+        return run;
+    }
+
     public async Task Save(Guid userId, Guid runId, RunStatus status, long duration)
     {
         var testRuns = await Get(userId);
@@ -61,8 +72,6 @@ public class RedisRunService(IDistributedCache cache, ITestRepository testReposi
         run.Duration = duration;
 
         await testRepository.UploadTestRun(run);
-
-        Console.WriteLine("Saved run to db");
     }
 
     public async Task Remove(Guid userId, Guid runId)
@@ -74,15 +83,6 @@ public class RedisRunService(IDistributedCache cache, ITestRepository testReposi
         if (run is null) return;
 
         bool status = testRuns.Remove(run);
-
-        if (status)
-        {
-            Console.WriteLine("Removed run");
-        }
-        else
-        {
-            Console.WriteLine("Could not remove run");
-        }
 
         var serializedRuns = JsonConvert.SerializeObject(testRuns);
 

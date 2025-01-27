@@ -88,9 +88,10 @@ public class TestsController(
         var file = testRepository.GetTestFile(fileId, id.Value);
         if (file is null) return NotFound("Could not find test file");
 
-        var groups = await executionService.RunAsync(file);
+        var (run, errors) = await executionService.RunAsync(file);
 
-        return Ok(groups);
+        if (errors.Count == 0) return Ok(run);
+        else return BadRequest(errors);
     }
 
     [HttpGet("{fileId}/runs")]

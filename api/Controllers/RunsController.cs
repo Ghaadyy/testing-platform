@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -19,9 +20,22 @@ public class RunsController(
     ITokenService tokenService,
     TestExecutionService executionService,
     HttpService httpService,
-    RedisLogService logService
+    RedisLogService logService,
+    RedisRunService runService
     ) : ControllerBase
 {
+    [HttpGet("{runId}")]
+    public ActionResult<TestRun> GetRun(Guid runId)
+    {
+        var id = tokenService.GetId(User);
+        if (id is null) return Unauthorized("User is not authorized");
+
+        var run = testRepository.GetTestRun(runId);
+        if (run is null) return NotFound("Could not find test run");
+
+        return Ok(run);
+    }
+
 
     [HttpGet("{runId}/logs")]
     public ActionResult<List<TestRun>> GetRunLogs(Guid runId)
@@ -37,7 +51,7 @@ public class RunsController(
     }
 
     [HttpGet("{runId}/compiled/run")]
-    public IActionResult RunCompiled(Guid runId)
+    public async Task<IActionResult> RunCompiled(Guid runId)
     {
         var id = tokenService.GetId(User);
         if (id is null) return Unauthorized("User is unauthorized");
@@ -48,9 +62,9 @@ public class RunsController(
         var file = testRepository.GetTestFile(run.FileId, id.Value);
         if (file is null) return NotFound("Test file not found for this run");
 
-        executionService.RunCompiledAsync(id.Value, run);
+        var newRun = await executionService.RunCompiledAsync(id.Value, run);
 
-        return Ok("Rerun succesfull");
+        return Ok(newRun);
     }
 
     [HttpGet("{runId}/connect")]
@@ -59,23 +73,18 @@ public class RunsController(
         var id = tokenService.GetId(User);
         if (id is null) return Unauthorized("User is unauthorized");
 
+        var run = await runService.Get(id.Value, runId);
+        if (run is null) return BadRequest("Invalid run id");
+
         var key = new LogKey(id.Value, runId);
         var logs = await logService.Get(key);
-        if (logs.IsNullOrEmpty()) return BadRequest("No logs");
 
         SetSSEHeaders(Response);
         httpService.Add(id.Value, runId, Response);
         await httpService.SendSseMessage(id.Value, runId, logs);
 
-        try
-        {
-            while (httpService.Get(id.Value, runId) is not null)
-                await Task.Delay(1000);
-        }
-        finally
-        {
-            httpService.Remove(id.Value, runId);
-        }
+        while (httpService.Get(id.Value, runId) == Response && !Response.HttpContext.RequestAborted.IsCancellationRequested)
+            await Task.Delay(1000);
 
         return new EmptyResult();
     }

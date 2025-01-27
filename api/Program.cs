@@ -31,10 +31,10 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Register services
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<TestExecutionService>();
+builder.Services.AddSingleton<TestExecutionService>();
 builder.Services.AddScoped<RedisLogService>();
-builder.Services.AddScoped<RedisProcessService>();
 builder.Services.AddScoped<RedisRunService>();
+builder.Services.AddSingleton<RedisProcessService>();
 builder.Services.AddSingleton<HttpService>();
 builder.Services.AddSingleton<CompilerService>();
 

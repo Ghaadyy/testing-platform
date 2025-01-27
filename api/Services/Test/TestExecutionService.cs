@@ -10,63 +10,58 @@ namespace RestrictedNL.Services.Test;
 public class TestExecutionService(
     HttpService httpService,
     RedisProcessService processService,
-    RedisLogService logService,
     CompilerService compilerService,
-    RedisRunService runService
+    IServiceProvider serviceProvider
     )
 {
-    public async Task<List<LogGroup>> RunAsync(TestFile file)
+    public async Task<(TestRun? run, List<string> errors)> RunAsync(TestFile file)
     {
+        using var scope = serviceProvider.CreateScope();
+        var runService = scope.ServiceProvider.GetRequiredService<RedisRunService>();
+        var logService = scope.ServiceProvider.GetRequiredService<RedisLogService>();
+
         var (code, errors) = await compilerService.Parse(file.Content);
-        var group = new LogGroup
-        {
-            TestName = "Compiled succesfully",
-            Status = LogStatus.FINISHED,
-        };
+        if (errors.Count > 0) return (null, errors);
 
-        if (errors.Count > 0)
-        {
-            group.TestName = errors.Last();
-            errors.RemoveAt(errors.Count - 1);
+        Guid runId = Guid.NewGuid();
+        await runService.AddRun(file.UserId, runId, file.Id, code, file.Content);
 
-            foreach (string err in errors)
-                group.Assertions.Add(new Assertion
-                {
-                    TestName = group.TestName,
-                    Message = err,
-                    Passed = false
-                });
-        }
+        RunBackgroundThread(scope, runId, file.UserId, code);
 
-        _ = Task.Run(() => ExecuteAsync(file.Id, file.UserId, code, file.Content));
-
-        return [group];
+        var run = await runService.GetRun(file.UserId, runId);
+        return (run, errors);
     }
 
-    public void RunCompiledAsync(Guid userId, TestRun run)
+    public async Task<TestRun> RunCompiledAsync(Guid userId, TestRun run)
     {
-        _ = Task.Run(() => ExecuteAsync(run.FileId, userId, run.CompiledCode, run.RawCode));
+        using var scope = serviceProvider.CreateScope();
+        var runService = scope.ServiceProvider.GetRequiredService<RedisRunService>();
+        var logService = scope.ServiceProvider.GetRequiredService<RedisLogService>();
+
+        Guid runId = Guid.NewGuid();
+        await runService.AddRun(userId, runId, run.FileId, run.CompiledCode, run.RawCode);
+
+        RunBackgroundThread(scope, runId, userId, run.CompiledCode);
+
+        return (await runService.GetRun(userId, run.Id))!;
     }
 
-    private async Task ExecuteAsync(Guid fileId, Guid userId, string seleniumCode, string rawCode)
+    private async Task ExecuteAsync(Guid runId, Guid userId, string code, RedisRunService runService, RedisLogService logService)
     {
         string path = Path.GetTempFileName() + ".js";
 
         Guid processId = Guid.NewGuid();
-        string wrapped = compilerService.ConfigureSockets(seleniumCode, processId);
+        string wrapped = compilerService.ConfigureSockets(code, processId);
         wrapped = compilerService.ConfigureSeeClick(wrapped);
 
         File.WriteAllText(path, wrapped);
 
-        //Save run to redis
-        Guid runId = Guid.NewGuid();
-        await runService.AddRun(userId, runId, fileId, seleniumCode, rawCode);
-
-        var (Success, Duration) = await StartProcessAsync(processId, userId, runId, path);
+        var (Success, Duration) = await StartProcessAsync(processId, userId, runId, path, logService);
         var key = new LogKey(userId, runId);
 
         //Send close message for user to gracefully stop
         await httpService.SendSseMessage(userId, runId, [], "close");
+        httpService.Remove(userId, runId);
 
         //Upload run and logs to database
         await runService.Save(userId, runId, Success ? RunStatus.PASSED : RunStatus.FAILED, Duration);
@@ -75,7 +70,7 @@ public class TestExecutionService(
         await logService.Remove(key);
     }
 
-    private async Task<(bool Success, long Duration)> StartProcessAsync(Guid processId, Guid userId, Guid runId, string path)
+    private async Task<(bool Success, long Duration)> StartProcessAsync(Guid processId, Guid userId, Guid runId, string path, RedisLogService logService)
     {
         //Add process to repo
         await processService.Add(processId, userId, runId);
@@ -102,7 +97,7 @@ public class TestExecutionService(
             await logService.AddLogGroup(key, new LogGroup
             {
                 TestName = "Failed to start Selenium process.",
-                Status = LogStatus.FINISHED,
+                Status = LogStatus.FAILED,
             });
             await httpService.SendSseMessage(userId, runId, await logService.Get(key));
             return (false, 0);
@@ -117,11 +112,31 @@ public class TestExecutionService(
             await logService.AddLogGroup(key, new LogGroup
             {
                 TestName = $"Process terminated unexpectedly with exit code {process.ExitCode}",
-                Status = LogStatus.FINISHED,
+                Status = LogStatus.FAILED,
             });
             await httpService.SendSseMessage(userId, runId, await logService.Get(key));
         }
 
         return (process.ExitCode == 0, stopwatch.ElapsedMilliseconds);
+    }
+
+    private void RunBackgroundThread(IServiceScope scope, Guid runId, Guid userId, string code)
+    {
+        var scopeFactory = scope.ServiceProvider.GetRequiredService<IServiceScopeFactory>();
+
+        _ = Task.Factory.StartNew(async () =>
+       {
+           try
+           {
+               using var backgroundScope = scopeFactory.CreateScope();
+               var runService = backgroundScope.ServiceProvider.GetRequiredService<RedisRunService>();
+               var logService = backgroundScope.ServiceProvider.GetRequiredService<RedisLogService>();
+               await ExecuteAsync(runId, userId, code, runService, logService);
+           }
+           catch (Exception e)
+           {
+               Console.WriteLine($"Error: {e.Message}");
+           }
+       }, TaskCreationOptions.LongRunning);
     }
 }

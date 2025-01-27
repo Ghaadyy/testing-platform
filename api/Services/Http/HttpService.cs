@@ -33,22 +33,27 @@ public class HttpService
 
         if (response != null)
         {
-            var sseObject = JsonConvert.SerializeObject(new
+            try
             {
-                message,
-                status
-            }, new JsonSerializerSettings
+                var sseObject = JsonConvert.SerializeObject(new
+                {
+                    message,
+                    status
+                }, new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                });
+
+                var data = $"data: {sseObject}\n\n";
+
+                await response.WriteAsync(data);
+
+                await response.Body.FlushAsync();
+            }
+            catch (Exception)
             {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });
-
-            await response.WriteAsync(sseObject);
-
-            await response.Body.FlushAsync();
-        }
-        else
-        {
-            Console.WriteLine("Response is null");
+                Remove(userId, runId);
+            }
         }
     }
 }
