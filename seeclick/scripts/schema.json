@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "image": {
+      "type": "string"
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/element"
+      }
+    }
+  },
+  "$defs": {
+    "element": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "The description of the UI element."
+        }
+      },
+      "required": ["description"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["image", "elements"],
+  "additionalProperties": false
+}
