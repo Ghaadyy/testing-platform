@@ -1,35 +1,50 @@
-FROM debian:bullseye-slim as cmake
+FROM mcr.microsoft.com/dotnet/sdk:8.0
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y git python3-pip
+RUN apt-get update && apt-get install -y \
+    docker.io \
+    qemu-user-static \
+    binfmt-support
 
-RUN pip install cmake
+# Use testing channel to use latest g++ compiler for rnlc
+RUN echo "deb http://deb.debian.org/debian testing main" >> /etc/apt/sources.list
 
-RUN git clone https://github.com/Ghaadyy/restricted-nl && \
-    echo "Clone timestamp: $(date +%s)"
-
-WORKDIR /restricted-nl
-RUN cmake . && make
-
-FROM mcr.microsoft.com/dotnet/sdk:8.0 as build
-
-RUN apt-get update && \
-    apt-get install -y nodejs npm
+# QEMU is needed in case the host machine is arm64
+# It can be resolved when we have an arm64 release of the compiler
+RUN update-binfmts --enable qemu-x86_64 \
+    && dpkg --add-architecture amd64 \
+    && apt-get update -y \
+    && apt-get upgrade -y \
+    && apt-get install -y \
+    g++:amd64 \
+    gcc:amd64
 
 WORKDIR /app
 
-COPY . /app/
+ENV INSTALL_DIR=/usr/local/bin
+ENV FILE_NAME=build-linux-v1.0.0.tar.gz
 
+RUN curl -L -o $FILE_NAME https://github.com/Ghaadyy/restricted-nl/releases/latest/download/$FILE_NAME
 
+RUN tar -xzf $FILE_NAME -C $INSTALL_DIR && \
+    rm $FILE_NAME && \
+    mv /usr/local/bin/restricted_nl /usr/local/bin/rnlc
+
+ENV PATH="${INSTALL_DIR}:$PATH"
+
+WORKDIR /app/api
+
+COPY fyp-backend.csproj .
 RUN dotnet restore
-RUN npm i websocket selenium-webdriver
-RUN npm i -g mocha
+
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+COPY . .
 
 RUN dotnet build
 
-COPY --from=cmake /restricted-nl/librestricted_nl_lib.so /app/bin/Debug/net8.0/
-
 EXPOSE 5064
 
-CMD dotnet run
+CMD dotnet ef database update && \
+    dotnet run
+    
