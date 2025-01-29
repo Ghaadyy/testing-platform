@@ -1,7 +1,7 @@
 # Automated Testing Platform
 
 ![UI editor screen](/docs/assets/ui-editor.png)
-![Run screen with live updates](/docs/assets/ui-editor.png)
+![Run screen with live updates](/docs/assets/run-screen.png)
 
 ## About the Project
 
