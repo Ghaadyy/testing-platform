@@ -48,15 +48,11 @@ public class TestExecutionService(
 
     private async Task ExecuteAsync(Guid runId, Guid userId, string code, RedisRunService runService, RedisLogService logService)
     {
-        string path = Path.GetTempFileName() + ".js";
-
         Guid processId = Guid.NewGuid();
-        string wrapped = compilerService.ConfigureSockets(code, processId);
-        wrapped = compilerService.ConfigureSeeClick(wrapped);
+        code = compilerService.ConfigureSockets(code, processId);
+        code = compilerService.ConfigureSeeClick(code);
 
-        File.WriteAllText(path, wrapped);
-
-        var (Success, Duration) = await StartProcessAsync(processId, userId, runId, path, logService);
+        var (Success, Duration) = await StartProcessAsync(processId, userId, runId, code, logService);
         var key = new LogKey(userId, runId);
 
         //Send close message for user to gracefully stop
@@ -70,7 +66,7 @@ public class TestExecutionService(
         await logService.Remove(key);
     }
 
-    private async Task<(bool Success, long Duration)> StartProcessAsync(Guid processId, Guid userId, Guid runId, string path, RedisLogService logService)
+    private async Task<(bool Success, long Duration)> StartProcessAsync(Guid processId, Guid userId, Guid runId, string code, RedisLogService logService)
     {
         //Add process to repo
         await processService.Add(processId, userId, runId);
@@ -82,9 +78,10 @@ public class TestExecutionService(
         var dockerInfo = new ProcessStartInfo
         {
             FileName = "docker",
-            Arguments = $"run --rm -v \"{path}:/app/script.js\" test-environment mocha /app/script.js",
+            Arguments = $@"run --rm -i --network host test-environment bash -c ""cat > /app/script.js && mocha /app/script.js""",
             UseShellExecute = false,
             CreateNoWindow = true,
+            RedirectStandardInput = true,
         };
 
         LogKey key = new(userId, runId);
@@ -93,7 +90,6 @@ public class TestExecutionService(
         using var process = Process.Start(dockerInfo);
         if (process is null)
         {
-            File.Delete(path);
             await logService.AddLogGroup(key, new LogGroup
             {
                 TestName = "Failed to start Selenium process.",
@@ -102,10 +98,15 @@ public class TestExecutionService(
             await httpService.SendSseMessage(userId, runId, await logService.Get(key));
             return (false, 0);
         }
+
+        using (var stdin = process.StandardInput)
+        {
+            await stdin.WriteAsync(code);
+            await stdin.FlushAsync();
+        }
+
         await process.WaitForExitAsync();
         stopwatch.Stop();
-
-        File.Delete(path);
 
         if (process.ExitCode != 0)
         {
