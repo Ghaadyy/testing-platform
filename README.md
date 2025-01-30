@@ -20,7 +20,7 @@ This project presents a platform that enables users to create web tests using a 
 
 In order to setup the project, you will need a stable version of [Docker](https://docker.com) and [Docker Compose](https://docs.docker.com/compose).
 
-We provide a `compose.yaml` file in order to run containers for each service in this project. **It is highly recommended you run the services using Docker.**
+We provide a `compose.yml` file in order to run containers for each service in this project. **It is highly recommended you run the services using Docker.**
 
 ### Docker Installation
 
@@ -28,31 +28,18 @@ After installing Docker and Docker Compose, you can simply go ahead and run the 
 
 ```bash
 git clone https://github.com/Ghaadyy/fyp.git && cd fyp/
-cd api
-dotnet tool install --global dotnet-ef
+cd api && dotnet tool install --global dotnet-ef
 dotnet ef migrations add InitialMigration && cd ..
 docker compose up # Start the services
 ```
 
-Now, you should have all the services running except the Selenium server which has to be hosted locally.
-
-#### Setting up Selenium Grid
-
-To excute the compiled scripts, download and install the latest [Selenium Grid server](https://github.com/SeleniumHQ/selenium/releases/) jar file _(4.28.1 is a working version)_.
-
-> [!NOTE]
-> Support for the `selenium/standalone-docker` and `selenium/standalone-chrome` is in development. For now, you can download the latest Selenium server release and run it locally.
-
-Run the Selenium Grid server with the following command. For more information see the [official documentation](https://www.selenium.dev/documentation/grid/getting_started/).
-
-```bash
-java -jar selenium-server-x.x.x.jar standalone
-```
+Now, you should have all the services up and running.
 
 ### Manual Installation
 
 > [!WARNING]
-> It is highly recommended to run the project with Docker. See [Docker Installation](#docker-installation) for more information.
+> This part of the documentation is deprecated and unmaintained. It will be removed soon.
+> **It is highly recommended to run the project with Docker.** See [Docker Installation](#docker-installation) for more information.
 
 If you wish to setup the project manually, you could start by cloning the repository.
 
