@@ -21,7 +21,7 @@ RUN update-binfmts --enable qemu-x86_64 \
 WORKDIR /app
 
 ENV INSTALL_DIR=/usr/local/bin
-ENV FILE_NAME=build-linux-v1.0.0.tar.gz
+ENV FILE_NAME=build-linux-v1.0.1.tar.gz
 
 RUN curl -L -o $FILE_NAME https://github.com/Ghaadyy/restricted-nl/releases/latest/download/$FILE_NAME
 
