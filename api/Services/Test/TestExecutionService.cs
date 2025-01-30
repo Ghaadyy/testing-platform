@@ -78,7 +78,7 @@ public class TestExecutionService(
         var dockerInfo = new ProcessStartInfo
         {
             FileName = "docker",
-            Arguments = $@"run --rm -i --network host test-environment bash -c ""cat > /app/script.js && mocha /app/script.js""",
+            Arguments = $@"run --rm -i test-environment bash -c ""cat > /app/script.js && mocha /app/script.js""",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardInput = true,
