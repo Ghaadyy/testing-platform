@@ -26,6 +26,16 @@ services:
   redis:
     image: redis:7.2.7
 
+  selenium:
+    image: selenium/standalone-chrome:4.9.0
+    # there is no support for arm64 chrome images
+    # force users to download the x86_64 image and emulate it
+    platform: linux/amd64
+    shm_size: 2gb
+    ports:
+      - "7900:7900"
+      - "4444:4444"
+
   db:
     image: postgres:17.0
     ports:
