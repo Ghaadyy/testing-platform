@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shadcn/components/ui/dropdown-menu";
 import { TestFile } from "@/models/TestFile";
-import { DataTable } from "./DataTable";
+import { DataTable } from "@/components/shared/table/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { CopyIcon, EditIcon, TrashIcon, Workflow } from "lucide-react";
 import { Button } from "@/shadcn/components/ui/button";

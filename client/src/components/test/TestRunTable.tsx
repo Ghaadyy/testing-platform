@@ -1,7 +1,7 @@
 import { TestRun } from "@/models/TestRun";
 import { Button } from "@/shadcn/components/ui/button";
 import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../shared/table/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   Binoculars,

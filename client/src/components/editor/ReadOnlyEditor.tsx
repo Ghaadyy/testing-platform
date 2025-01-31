@@ -7,7 +7,7 @@ import {
 import Editor from "@monaco-editor/react";
 import { setupEditor } from "@/utils/setupEditor";
 import { LogGroup } from "@/models/Log";
-import TestLogs from "../TestLogs";
+import TestLogs from "../test/TestLogs";
 import { ScrollArea, ScrollBar } from "@/shadcn/components/ui/scroll-area";
 import { Card, CardContent, CardTitle } from "@/shadcn/components/ui/card";
 
