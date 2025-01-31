@@ -5,6 +5,7 @@ using RestrictedNL.Services.Test;
 using RestrictedNL.Repository.Test;
 using RestrictedNL.Services.Token;
 using RestrictedNL.Models.Test;
+using RestrictedNL.Services.Compiler;
 
 namespace RestrictedNL.Controllers;
 
@@ -15,7 +16,8 @@ public class TestsController(
     ITestRepository testRepository,
     TestExecutionService executionService,
     ITokenService tokenService,
-    RedisRunService runService
+    RedisRunService runService,
+    CompilerService compilerService
     ) : ControllerBase
 {
     [HttpGet]
@@ -77,6 +79,21 @@ public class TestsController(
 
         var updatedFile = await testRepository.UpdateTestFile(file, fileDTO.Content);
         return Ok(updatedFile);
+    }
+
+    [HttpGet("{fileId}/compile")]
+    public async Task<IActionResult> Compile(Guid fileId)
+    {
+        var id = tokenService.GetId(User);
+        if (id is null) return Unauthorized();
+
+        var file = testRepository.GetTestFile(fileId, id.Value);
+        if (file is null) return NotFound("Could not find test file");
+
+        var (json, errors) = await compilerService.Parse(file.Content, CompilerTarget.JSON);
+
+        if (errors.Count == 0) return Ok(json);
+        else return BadRequest(errors);
     }
 
     [HttpGet("{fileId}/run")]

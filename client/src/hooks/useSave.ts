@@ -2,31 +2,20 @@ import { EditorContext } from "@/context/EditorContext";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { useToast } from "@/shadcn/hooks/use-toast";
-import { generateCode } from "@/utils/generateCode";
-import { parseCode } from "@/utils/parseCode";
 import { useContext } from "react";
+import { useCompiler } from "./useCompiler";
 
 export function useSave() {
   const { toast } = useToast();
   const { token } = useContext(UserContext);
-  const { setCode, isCode, tests } = useContext(EditorContext);
+  const { setCode, isCode, tests, code } = useContext(EditorContext);
+  const { generateCode } = useCompiler();
 
-  async function saveDocument(fileId: string, code: string) {
+  async function saveDocument(fileId: string) {
+    let generatedCode: string = "";
     if (!isCode) {
-      const generatedCode = generateCode(tests);
-      const [, status] = parseCode(generatedCode);
-
-      if (status) {
-        setCode(generatedCode);
-        code = generatedCode;
-      } else {
-        toast({
-          title: "Test syntax error!",
-          description:
-            "Please make sure you have filled out all the fields correctly then try again. Your progress is unsaved.",
-          variant: "destructive",
-        });
-      }
+      generatedCode = generateCode(tests);
+      setCode(generatedCode);
     }
 
     const res = await fetch(`${API_URL}/api/tests/${fileId}`, {
@@ -37,7 +26,7 @@ export function useSave() {
       },
       body: JSON.stringify({
         fileName: fileId, // TODO: FIX
-        content: code,
+        content: isCode ? code : generatedCode,
       }),
     });
 

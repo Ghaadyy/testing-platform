@@ -20,7 +20,7 @@ public class TestExecutionService(
         var runService = scope.ServiceProvider.GetRequiredService<RedisRunService>();
         var logService = scope.ServiceProvider.GetRequiredService<RedisLogService>();
 
-        var (code, errors) = await compilerService.Parse(file.Content);
+        var (code, errors) = await compilerService.Parse(file.Content, CompilerTarget.SELENIUM);
         if (errors.Count > 0) return (null, errors);
 
         Guid runId = Guid.NewGuid();
@@ -43,7 +43,7 @@ public class TestExecutionService(
 
         RunBackgroundThread(scope, runId, userId, run.CompiledCode);
 
-        return (await runService.GetRun(userId, run.Id))!;
+        return (await runService.GetRun(userId, runId))!;
     }
 
     private async Task ExecuteAsync(Guid runId, Guid userId, string code, RedisRunService runService, RedisLogService logService)

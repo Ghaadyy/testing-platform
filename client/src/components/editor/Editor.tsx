@@ -1,16 +1,14 @@
-import { Editor as MonacoEditor } from "@monaco-editor/react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { EditorContext } from "@/context/EditorContext";
-import TestCreator from "./TestCreator";
+import UIEditor from "@/components/editor/ui/UIEditor";
 import { Switch } from "@/shadcn/components/ui/switch";
 import { Label } from "@/shadcn/components/ui/label";
-import { generateCode } from "@/utils/generateCode";
-import { setupEditor } from "@/utils/setupEditor";
-import { parseCode } from "@/utils/parseCode";
+import { useCompiler } from "@/hooks/useCompiler";
 import { toast } from "@/shadcn/hooks/use-toast";
 import { TestFile } from "@/models/TestFile";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
+import CodeEditor from "./code/CodeEditor";
 
 async function openDocument(
   fileId: string,
@@ -37,39 +35,26 @@ async function openDocument(
 }
 
 function Editor() {
-  const { code, setCode, tests, setTests, isCode, setIsCode, fileId } =
+  const { setCode, setTests, tests, isCode, setIsCode, fileId } =
     useContext(EditorContext);
   const { token } = useContext(UserContext);
+  const { parseCode, generateCode } = useCompiler();
 
-  const [statementId, setStatementId] = useState<number>(1);
-
-  function handleEditorSwitch(checked: boolean) {
+  async function handleEditorSwitch(checked: boolean) {
     if (checked) {
-      setCode(generateCode(tests));
-      setIsCode(checked);
+      const generatedCode = generateCode(tests);
+      setCode(generatedCode);
+      setIsCode(true);
     } else {
-      const [parsedTests, status] = parseCode(code);
-      if (!status) {
-        toast({
-          title: "Test contains syntax errors!",
-          variant: "destructive",
-          description:
-            "Please fix these errors before switching to the UI editor.",
-        });
-        setIsCode(true);
-      } else {
-        setTests(parsedTests);
-        setIsCode(checked);
-      }
+      const tests = await parseCode(fileId);
+      setTests(tests);
+      setIsCode(tests.length === 0);
     }
   }
 
   useEffect(() => {
     openDocument(fileId, token!, ({ content }) => {
-      const [parsedTests, , nextId] = parseCode(content);
       setCode(content);
-      setTests(parsedTests);
-      setStatementId(nextId);
       toast({
         title: "File opened successfully",
       });
@@ -88,25 +73,7 @@ function Editor() {
           {isCode ? "Use visual editor" : "Use code editor"}
         </Label>
       </div>
-      {isCode ? (
-        <MonacoEditor
-          height="100%"
-          options={{
-            minimap: {
-              enabled: false,
-            },
-            fontSize: 14,
-          }}
-          language={"rnl"}
-          className="editor-wrapper"
-          theme={"rnl-theme"}
-          value={code}
-          onChange={(c) => setCode(c ?? "")}
-          beforeMount={setupEditor}
-        />
-      ) : (
-        <TestCreator statementId={statementId} />
-      )}
+      {isCode ? <CodeEditor /> : <UIEditor />}
     </div>
   );
 }

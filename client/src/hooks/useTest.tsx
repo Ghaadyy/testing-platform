@@ -12,60 +12,63 @@ export function useTest(onMessage: (logs: LogGroup[]) => void = () => {}) {
   const [errors, setErrors] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  const connect = useCallback(async function (url: string) {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const connect = useCallback(
+    async function (url: string) {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!res.ok) return;
+      if (!res.ok) return;
 
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-    const readStream = async () => {
-      if (reader === undefined) return;
+      const readStream = async () => {
+        if (reader === undefined) return;
 
-      const { value, done } = await reader.read();
-      if (done) return;
+        const { value, done } = await reader.read();
+        if (done) return;
 
-      const chunk = decoder.decode(value, { stream: true });
-      buffer += chunk;
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
 
-      let boundaryIndex;
-      while ((boundaryIndex = buffer.indexOf("\n\n")) !== -1) {
-        const completeMessage = buffer.slice(0, boundaryIndex).trim();
-        buffer = buffer.slice(boundaryIndex + 1);
+        let boundaryIndex;
+        while ((boundaryIndex = buffer.indexOf("\n\n")) !== -1) {
+          const completeMessage = buffer.slice(0, boundaryIndex).trim();
+          buffer = buffer.slice(boundaryIndex + 1);
 
-        if (completeMessage.startsWith("data:")) {
-          const jsonData = completeMessage.slice(5).trim();
-          try {
-            const { message, status } = JSON.parse(jsonData);
+          if (completeMessage.startsWith("data:")) {
+            const jsonData = completeMessage.slice(5).trim();
+            try {
+              const { message, status } = JSON.parse(jsonData);
 
-            if (status === "close") {
-              console.log("[SSE] Connection closed.");
-              return;
-            } else {
-              onMessage(message);
+              if (status === "close") {
+                console.log("[SSE] Connection closed.");
+                return;
+              } else {
+                onMessage(message);
+              }
+            } catch (error) {
+              console.error("Failed to parse SSE JSON:", jsonData, error);
             }
-          } catch (error) {
-            console.error("Failed to parse SSE JSON:", jsonData, error);
           }
         }
-      }
+
+        readStream();
+      };
 
       readStream();
-    };
+    },
+    [onMessage, token]
+  );
 
-    readStream();
-  }, []);
-
-  function getLiveUpdates(runId: string) {
-    connect(`${API_URL}/api/runs/${runId}/connect`);
-  }
+  const getUpdates = useCallback(
+    function (runId: string) {
+      connect(`${API_URL}/api/runs/${runId}/connect`);
+    },
+    [connect]
+  );
 
   const run = useCallback(
     async (fileId: string) => {
@@ -97,30 +100,36 @@ export function useTest(onMessage: (logs: LogGroup[]) => void = () => {}) {
         setErrors(errors);
       }
     },
-    [token]
+    [navigate, token]
   );
 
   const rerun = useCallback(
     async (runId: string) => {
       const res = await fetch(`${API_URL}/api/runs/${runId}/compiled/run`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
-        const runId: string = await res.json();
+        const run: TestRun = await res.json();
         toast({
           title: "Compiled successfully",
           description: "View live test run.",
           action: (
-            <Button onClick={() => navigate(`/runs/${runId}`)}>View</Button>
+            <Button
+              onClick={() =>
+                navigate(`/runs/${run.id}`, {
+                  state: run,
+                })
+              }
+            >
+              View
+            </Button>
           ),
         });
       }
     },
-    [token]
+    [navigate, token]
   );
 
-  return { getLiveUpdates, run, rerun, errors, setErrors };
+  return { getUpdates, run, rerun, errors, setErrors };
 }
