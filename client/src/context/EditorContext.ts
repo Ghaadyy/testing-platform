@@ -1,4 +1,4 @@
-import { Test } from "@/models/Statement";
+import { Test } from "@/models/Program";
 import { createContext, Dispatch, SetStateAction } from "react";
 
 export type EditorContext = {

@@ -9,65 +9,57 @@ import {
 import { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 
-import type { Statement, ElementState, ElementType } from "@/models/Statement";
 import { GripVerticalIcon, TrashIcon } from "lucide-react";
+import { Action, ElementType, makeAction } from "@/models/Program";
 
-type StatementInputProps = {
-  id: number;
-  defaultStatement: Statement | undefined;
-  setStatements: React.Dispatch<React.SetStateAction<Statement[]>>;
-  onChange?: (newStatement: Statement) => void;
-  onMove?: (fromId: number, toId: number) => void;
+type Props = {
+  defaultAction: Action | undefined;
+  onChange: (action: Action) => void;
+  onMove: (fromId: string, toId: string) => void;
+  setActions: React.Dispatch<React.SetStateAction<Action[]>>;
 };
 
 function StatementInput({
-  id,
-  defaultStatement,
+  defaultAction,
   onChange,
   onMove,
-  setStatements,
-}: StatementInputProps) {
-  const [statement, setStatement] = useState<Statement>(
-    defaultStatement ?? {
-      id: 1,
-      action: "visit",
-      url: "",
-    }
-  );
+  setActions,
+}: Props) {
+  const [action, setAction] = useState<Action>(defaultAction ?? makeAction());
 
   const [{ isDragging }, drag] = useDrag(() => ({
-    type: "statement",
-    item: { id, statement },
+    type: "action",
+    item: { action: action },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
   }));
 
   const [, drop] = useDrop(() => ({
-    accept: "statement",
-    drop: (draggedItem: { id: number; statement: Statement }) => {
-      if (draggedItem.statement.id !== statement.id && onMove) {
-        onMove(draggedItem.statement.id, statement.id);
-        draggedItem.id = id;
+    accept: "action",
+    drop: (draggedItem: { id: string; action: Action }) => {
+      if (draggedItem.action.id !== action.id) {
+        onMove(draggedItem.action.id, action.id);
+        draggedItem.id = action.id;
       }
     },
   }));
 
   return (
     <div
-      className="p-4 flex flex-row gap-5 border-input border-2 rounded-lg cursor-grab items-center"
+      className="p-4 flex flex-row gap-5 border-input bg-background border-2 rounded-lg cursor-grab items-center"
       style={{ opacity: isDragging ? 0.5 : 1 }}
       ref={(node) => drag(drop(node))}
     >
       <Select
-        onValueChange={(action: Statement["action"]) => {
-          setStatement((statement) => {
+        onValueChange={(action: Action["action"]) => {
+          setAction((statement) => {
             statement.action = action;
-            if (onChange !== undefined) onChange(statement);
+            if (onChange) onChange(statement);
             return statement;
           });
         }}
-        value={statement.action}
+        value={action.action}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Action" />
@@ -80,54 +72,53 @@ function StatementInput({
         </SelectContent>
       </Select>
 
-      {statement.action === "visit" && (
+      {action.action === "visit" && (
         <Input
           className="w-[180px]"
           placeholder="http://www.example.com"
-          value={statement.url}
+          value={action.url}
           onChange={(e) =>
-            setStatement((statement) => {
+            setAction((statement) => {
               if (statement.action === "visit") statement.url = e.target.value;
-              if (onChange !== undefined) onChange(statement);
+              onChange(statement);
               return statement;
             })
           }
         />
       )}
 
-      {statement.action === "type" && (
+      {action.action === "type" && (
         <Input
           className="w-[180px]"
           placeholder="Content to type..."
-          value={statement.content}
+          value={action.content}
           onChange={(e) =>
-            setStatement((statement) => {
-              if (statement.action === "type")
-                statement.content = e.target.value;
-              if (onChange !== undefined) onChange(statement);
-              return statement;
+            setAction((action) => {
+              if (action.action === "type") action.content = e.target.value;
+              onChange(action);
+              return action;
             })
           }
         />
       )}
 
-      {(statement.action === "click" ||
-        statement.action === "type" ||
-        statement.action == "check") && (
+      {(action.action === "click" ||
+        action.action === "type" ||
+        action.action == "check") && (
         <Select
           onValueChange={(element: ElementType) =>
-            setStatement((statement) => {
+            setAction((statement) => {
               if (
                 statement.action === "click" ||
                 statement.action === "type" ||
                 statement.action == "check"
               )
                 statement.elementType = element;
-              if (onChange !== undefined) onChange(statement);
+              if (onChange) onChange(statement);
               return statement;
             })
           }
-          value={statement.elementType}
+          value={action.elementType}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Element Type" />
@@ -142,38 +133,39 @@ function StatementInput({
         </Select>
       )}
 
-      {(statement.action === "click" ||
-        statement.action === "check" ||
-        statement.action === "type") && (
+      {(action.action === "click" ||
+        action.action === "check" ||
+        action.action === "type") && (
         <Input
           className="w-[180px]"
           placeholder="Describe your statement..."
-          value={statement.description}
+          value={action.description}
           onChange={(e) =>
-            setStatement((statement) => {
+            setAction((statement) => {
               if (
                 statement.action === "click" ||
                 statement.action === "type" ||
                 statement.action === "check"
               )
                 statement.description = e.target.value;
-              if (onChange !== undefined) onChange(statement);
+              if (onChange) onChange(statement);
               return statement;
             })
           }
         />
       )}
 
-      {statement.action === "check" && (
+      {action.action === "check" && (
         <Select
-          onValueChange={(state: ElementState) =>
-            setStatement((statement) => {
-              if (statement.action === "check") statement.state = state;
-              if (onChange !== undefined) onChange(statement);
+          onValueChange={(state: string) =>
+            setAction((statement) => {
+              if (statement.action === "check")
+                statement.state = state === "is displayed";
+              if (onChange) onChange(statement);
               return statement;
             })
           }
-          value={statement.state}
+          value={action.state ? "is displayed" : "is hidden"}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="State" />
@@ -189,11 +181,9 @@ function StatementInput({
         <TrashIcon
           className="cursor-pointer"
           size={20}
-          onClick={() => {
-            setStatements((prevStatements) =>
-              prevStatements.filter((st) => st.id !== id)
-            );
-          }}
+          onClick={() =>
+            setActions((prev) => prev.filter((a) => a.id !== action.id))
+          }
         />
         <GripVerticalIcon size={20} />
       </div>

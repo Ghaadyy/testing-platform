@@ -1,9 +1,9 @@
 import Menu from "@/components/Menu";
-import Editor from "@/components/Editor";
+import Editor from "@/components/editor/Editor";
 import { useState } from "react";
 import { EditorContext } from "@/context/EditorContext";
 import { useParams } from "react-router";
-import { Test } from "@/models/Statement";
+import { Test } from "@/models/Program";
 import { useTest } from "@/hooks/useTest";
 import { ErrorCard } from "@/components/ErrorCard";
 

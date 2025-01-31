@@ -15,9 +15,9 @@ import { useShortcut } from "@/hooks/useShortcut";
 type Props = { onRun: () => void };
 
 function Menu({ onRun }: Props) {
-  const { fileId, code } = useContext(EditorContext);
+  const { fileId } = useContext(EditorContext);
   const { saveDocument } = useSave();
-  useShortcut(() => saveDocument(fileId, code), onRun);
+  useShortcut(() => saveDocument(fileId), onRun);
 
   const { theme, setTheme } = useTheme();
 
@@ -31,7 +31,7 @@ function Menu({ onRun }: Props) {
         </MenubarMenu>
         <MenubarMenu>
           <MenubarMenu>
-            <MenubarTrigger onClick={() => saveDocument(fileId, code)}>
+            <MenubarTrigger onClick={() => saveDocument(fileId)}>
               Save
             </MenubarTrigger>
           </MenubarMenu>

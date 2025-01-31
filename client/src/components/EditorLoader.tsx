@@ -22,8 +22,8 @@ function EditorLoader() {
           </CardTitle>
           <ScrollArea>
             <CardContent className="px-4 flex flex-col gap-4">
-              {Array.from({ length: 10 }).map(() => (
-                <Skeleton className="w-full h-10" />
+              {Array.from({ length: 10 }).map((_, id) => (
+                <Skeleton key={id} className="w-full h-10" />
               ))}
             </CardContent>
           </ScrollArea>

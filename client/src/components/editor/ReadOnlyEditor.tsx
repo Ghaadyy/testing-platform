@@ -7,8 +7,8 @@ import {
 import Editor from "@monaco-editor/react";
 import { setupEditor } from "@/utils/setupEditor";
 import { LogGroup } from "@/models/Log";
-import TestLogs from "./TestLogs";
-import { ScrollArea } from "@/shadcn/components/ui/scroll-area";
+import TestLogs from "../TestLogs";
+import { ScrollArea, ScrollBar } from "@/shadcn/components/ui/scroll-area";
 import { Card, CardContent, CardTitle } from "@/shadcn/components/ui/card";
 
 type Props = {
@@ -43,7 +43,7 @@ function ReadOnlyEditor({ code, logs }: Props) {
       <ResizablePanel defaultSize={50} className="px-3 w-full">
         <Card className="flex flex-col gap-4 h-full">
           <CardTitle className="font-bold text-2xl px-4 pt-4">Logs</CardTitle>
-          <ScrollArea>
+          <ScrollArea className="h-full">
             <CardContent className="px-4">
               {Object.keys(logs).length === 0 ? (
                 <p>No test logs for this run!</p>
@@ -51,6 +51,7 @@ function ReadOnlyEditor({ code, logs }: Props) {
                 <TestLogs logs={logs} />
               )}
             </CardContent>
+            <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </Card>
       </ResizablePanel>
