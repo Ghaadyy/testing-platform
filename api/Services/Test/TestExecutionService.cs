@@ -43,7 +43,7 @@ public class TestExecutionService(
 
         RunBackgroundThread(scope, runId, userId, run.CompiledCode);
 
-        return (await runService.GetRun(userId, run.Id))!;
+        return (await runService.GetRun(userId, runId))!;
     }
 
     private async Task ExecuteAsync(Guid runId, Guid userId, string code, RedisRunService runService, RedisLogService logService)
