@@ -17,19 +17,19 @@ function EditorScreen() {
 
   const { run, errors, setErrors } = useTest();
 
+  const initState = {
+    fileId,
+    setFileId,
+    code,
+    setCode,
+    isCode,
+    setIsCode,
+    tests,
+    setTests,
+  };
+
   return (
-    <EditorContext.Provider
-      value={{
-        fileId,
-        setFileId,
-        code,
-        setCode,
-        isCode,
-        setIsCode,
-        tests,
-        setTests,
-      }}
-    >
+    <EditorContext.Provider value={initState}>
       <div className="h-screen w-screen flex flex-col gap-3 p-3">
         <Menu onRun={async () => await run(fileId)} />
         <Editor />

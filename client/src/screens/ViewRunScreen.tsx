@@ -17,31 +17,43 @@ function ViewRunScreen() {
 
   const { state } = useLocation();
   const navigate = useNavigate();
-  const testRun: TestRun = state;
+  const testRun: TestRun | undefined = state;
 
   const [logs, setLogs] = useState<LogGroup[]>([]);
+  const [run, setRun] = useState<TestRun | undefined>(testRun);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const onMessage = useCallback((logs: LogGroup[]) => setLogs(logs), []);
-  const { getLiveUpdates, rerun } = useTest(onMessage);
+  const { getUpdates, rerun } = useTest(onMessage);
+
+  console.log(run);
 
   useEffect(() => {
-    if (testRun.status !== RunStatus.PENDING) {
+    if (!testRun) {
+      (async () => {
+        const res = await fetch(`${API_URL}/api/runs/${runId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const run: TestRun = await res.json();
+        setRun(run);
+      })();
+    }
+  }, [runId, testRun, token]);
+
+  useEffect(() => {
+    if (run?.status !== RunStatus.PENDING) {
       (async () => {
         const res = await fetch(`${API_URL}/api/runs/${runId}/logs`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         const logs: LogGroup[] = await res.json();
         setLogs(logs);
-        setIsLoading(false);
       })();
     } else {
-      getLiveUpdates(runId!);
-      setIsLoading(false);
+      getUpdates(runId!);
     }
-  }, []);
+    setIsLoading(false);
+  }, [getUpdates, runId, run, token]);
 
   return (
     <div className="h-screen w-screen p-5 flex flex-col gap-3">
@@ -54,19 +66,21 @@ function ViewRunScreen() {
           <ChevronLeft />
           <h1>Back</h1>
         </Button>
-        <Button
-          className="flex flex-row gap-3"
-          variant="ghost"
-          onClick={() => rerun(runId!)}
-          disabled={testRun.status === 1}
-        >
-          <RefreshCcw /> Replay test
-        </Button>
+        <div className="flex flex-row gap-3">
+          <Button
+            className="flex flex-row gap-3"
+            variant="ghost"
+            onClick={() => rerun(runId!)}
+            disabled={run?.status === RunStatus.PENDING}
+          >
+            <RefreshCcw /> Replay test
+          </Button>
+        </div>
       </div>
-      {isLoading ? (
+      {isLoading || !run ? (
         <EditorLoader />
       ) : (
-        <ReadOnlyEditor code={testRun.rawCode} logs={logs} />
+        <ReadOnlyEditor code={run.rawCode} logs={logs} />
       )}
     </div>
   );
