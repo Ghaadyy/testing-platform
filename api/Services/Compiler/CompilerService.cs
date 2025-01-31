@@ -1,20 +1,29 @@
 using System.Diagnostics;
 using System.Text;
+using Microsoft.OpenApi.Extensions;
 
 namespace RestrictedNL.Services.Compiler;
+
+public enum CompilerTarget
+{
+    SELENIUM,
+    JSON
+}
 
 public class CompilerService(
     IConfiguration configuration,
     IHttpContextAccessor accessor
     )
 {
-    public async Task<(string code, List<string> errors)> Parse(string code)
+    public async Task<(string code, List<string> errors)> Parse(string code, CompilerTarget compilerTarget)
     {
+        var target = compilerTarget.GetDisplayName().ToLower();
+
         var compInfo = new ProcessStartInfo
         {
             FileName = "rnlc",
             // this should be moved to an env var when the compiler supports it
-            Arguments = "--keep-xpath",
+            Arguments = $"--keep-xpath -t {target}",
             UseShellExecute = false,
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
