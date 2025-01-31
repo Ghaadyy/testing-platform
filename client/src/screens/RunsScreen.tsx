@@ -1,5 +1,5 @@
-import TableLoader from "@/components/TableLoader";
-import TestRunTable from "@/components/TestRunTable";
+import TableLoader from "@/components/shared/table/TableLoader";
+import TestRunTable from "@/components/test/TestRunTable";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { TestFile } from "@/models/TestFile";

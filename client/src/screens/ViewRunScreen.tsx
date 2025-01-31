@@ -1,4 +1,4 @@
-import EditorLoader from "@/components/EditorLoader";
+import EditorLoader from "@/components/editor/EditorLoader";
 import ReadOnlyEditor from "@/components/editor/ReadOnlyEditor";
 import { UserContext } from "@/context/UserContext";
 import { useTest } from "@/hooks/useTest";

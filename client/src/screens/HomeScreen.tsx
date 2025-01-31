@@ -1,5 +1,5 @@
-import FilesTable from "@/components/FilesTable";
-import TableLoader from "@/components/TableLoader";
+import FilesTable from "@/components/test/FilesTable";
+import TableLoader from "@/components/shared/table/TableLoader";
 import { UserContext } from "@/context/UserContext";
 import { API_URL } from "@/main";
 import { TestFile } from "@/models/TestFile";

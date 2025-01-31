@@ -19,7 +19,7 @@ import { Link } from "react-router";
 import { useTheme } from "@/shadcn/components/theme-provider";
 import { NavUser } from "./NavUser";
 import { UserContext } from "@/context/UserContext";
-import CreateFileDialog from "./CreateFileDialog";
+import CreateFileDialog from "../dialog/CreateFileDialog";
 
 type HomeSideBarProps = {
   children: React.ReactNode;

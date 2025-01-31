@@ -3,7 +3,7 @@ import { useContext } from "react";
 
 import { ScrollArea, ScrollBar } from "@/shadcn/components/ui/scroll-area";
 import { EditorContext } from "@/context/EditorContext";
-import AddTestDialog from "@/components/AddTestDialog";
+import AddTestDialog from "@/components/shared/dialog/AddTestDialog";
 
 function UIEditor() {
   const { tests, setTests } = useContext(EditorContext);
