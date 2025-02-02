@@ -145,15 +145,17 @@ for img_name in tqdm(image_files, desc="Processing images", total=total_images):
     text_descriptions = get_descriptions_openai(text_elements)
     for i, desc in enumerate(text_descriptions["elements"]):
         text_elements["elements"][i]["description"] = desc["description"]
-    all_results.append(text_elements)
 
     icon_descriptions = get_descriptions_llava(icon_elements)
     for i, desc in enumerate(icon_descriptions["elements"]):
-        if desc["description"] != "":
-            icon_elements["elements"][i]["description"] = desc["description"]
-        else:
-            del icon_elements["elements"][i]
-    all_results.append(icon_elements)
+        icon_elements["elements"][i]["description"] = desc["description"]
+
+    merged_elements = {
+        "image": img_name,
+        "elements": text_elements["elements"] + icon_elements["elements"],
+    }
+
+    all_results.append(merged_elements)
 
 with open(output_file, "w") as outfile:
     json.dump(all_results, outfile, indent=4)
