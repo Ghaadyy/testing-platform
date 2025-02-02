@@ -8,8 +8,9 @@ from tqdm import tqdm
 from ultralytics import YOLO
 from paddleocr import PaddleOCR
 from openai import OpenAI
-from constants import DEEPSEEK, OUTPUT_SCHEMA, PROMPT
+from constants import DEEPSEEK, LLAVA, LLAVA_PROMPT, OUTPUT_SCHEMA, DEEPSEEK_PROMPT
 from dotenv import load_dotenv
+import ollama
 
 load_dotenv()
 
@@ -19,33 +20,60 @@ output_file = os.getenv("OUTPUT_FILE")
 cropped_image_folder = os.getenv("CROPPED_IMG_DIR")
 yolo_images = os.getenv("YOLO_IMG_DIR")
 
-logging.getLogger('ppocr').setLevel(logging.WARNING)
+logging.getLogger("ppocr").setLevel(logging.WARNING)
 
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
+ocr = PaddleOCR(use_angle_cls=True, lang="en")
 
 model = YOLO(YOLO_PATH)
 
-client = OpenAI(
-    base_url="http://localhost:1234/v1",
-    api_key="lm-studio"
-)
+client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
 
-def get_descriptions(image_result, model=DEEPSEEK):
+
+def get_descriptions_openai(image_result, model=DEEPSEEK):
     completion = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": PROMPT},
-            {"role": "user", "content": json.dumps(image_result)}
+            {"role": "system", "content": DEEPSEEK_PROMPT},
+            {"role": "user", "content": json.dumps(image_result)},
         ],
         temperature=0.7,
-        response_format=OUTPUT_SCHEMA
+        response_format=OUTPUT_SCHEMA,
     )
-    
+
     return json.loads(completion.choices[0].message.content)
+
+
+def get_descriptions_llava(image_result):
+    icon_descriptions = {"elements": []}
+
+    for element in image_result["elements"]:
+        image_path = element["image_path"]
+        try:
+            response = ollama.chat(
+                model=LLAVA,
+                messages=[
+                    {"role": "user", "content": LLAVA_PROMPT, "images": [image_path]}
+                ],
+            )
+
+            raw_description = response["message"]["content"]
+
+            start = raw_description.find('"description": "') + len('"description": "')
+            end = raw_description.find('"', start)
+            clean_description = raw_description[start:end]
+            icon_descriptions["elements"].append({"description": clean_description})
+        except Exception as e:
+            print(f"Error processing image {image_path}: {e}")
+            icon_descriptions["elements"].append({"description": ""})
+
+    return icon_descriptions
+
 
 all_results = []
 
-image_files = [img_name for img_name in os.listdir(image_folder) if img_name.endswith(".jpg")]
+image_files = [
+    img_name for img_name in os.listdir(image_folder) if img_name.endswith(".jpg")
+]
 total_images = len(image_files)
 
 for img_name in tqdm(image_files, desc="Processing images", total=total_images):
@@ -53,16 +81,13 @@ for img_name in tqdm(image_files, desc="Processing images", total=total_images):
 
     if not os.path.exists(img_path):
         continue
-    
+
     results = model(img_path)
     plot = results[0].plot()
 
     image = cv2.imread(img_path)
 
-    image_result = {
-        "image": img_name,
-        "elements": []
-    }
+    image_result = {"image": img_name, "elements": []}
 
     for result in results:
         result.save(filename=f"{yolo_images}{os.path.splitext(img_name)[0]}_yolo.jpg")
@@ -87,32 +112,48 @@ for img_name in tqdm(image_files, desc="Processing images", total=total_images):
                     element = {
                         "bbox": box.xyxy[0].tolist(),
                         "category": class_name,
-                        "text": text
+                        "text": text,
                     }
             else:
-                cropped_image_path = os.path.join(cropped_image_folder,
-                                                    f"{os.path.splitext(img_name)[0]}_cropped_{x1}_{y1}_{x2}_{y2}"
-                                                    f".jpg")
+                cropped_image_path = os.path.join(
+                    cropped_image_folder,
+                    f"{os.path.splitext(img_name)[0]}_cropped_{x1}_{y1}_{x2}_{y2}"
+                    f".jpg",
+                )
                 cv2.imwrite(cropped_image_path, cropped_image)
 
                 element = {
                     "bbox": box.xyxy[0].tolist(),
                     "category": class_name,
-                    "text": "No text detected"
+                    "image_path": cropped_image_path,
                 }
 
             image_result["elements"].append(element)
-            
+
     image_result["elements"] = random.sample(image_result["elements"], 5)
 
-    descriptions = get_descriptions(image_result)
+    text_elements = {"image": img_name, "elements": []}
 
-    print(descriptions)
-    
-    for i, desc in enumerate(descriptions['elements']):
-        image_result['elements'][i]['description'] = desc['description']
+    icon_elements = {"image": img_name, "elements": []}
 
-    all_results.append(image_result)
+    for element in image_result["elements"]:
+        if element.get("text"):
+            text_elements["elements"].append(element)
+        else:
+            icon_elements["elements"].append(element)
 
-with open(output_file, 'w') as outfile:
+    text_descriptions = get_descriptions_openai(text_elements)
+    for i, desc in enumerate(text_descriptions["elements"]):
+        text_elements["elements"][i]["description"] = desc["description"]
+    all_results.append(text_elements)
+
+    icon_descriptions = get_descriptions_llava(icon_elements)
+    for i, desc in enumerate(icon_descriptions["elements"]):
+        if desc["description"] != "":
+            icon_elements["elements"][i]["description"] = desc["description"]
+        else:
+            del icon_elements["elements"][i]
+    all_results.append(icon_elements)
+
+with open(output_file, "w") as outfile:
     json.dump(all_results, outfile, indent=4)
