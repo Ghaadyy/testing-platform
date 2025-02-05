@@ -42,7 +42,7 @@ function Editor() {
 
   async function handleEditorSwitch(checked: boolean) {
     if (checked) {
-      const generatedCode = generateCode(tests);
+      const generatedCode = await generateCode(tests);
       setCode(generatedCode);
       setIsCode(true);
     } else {
