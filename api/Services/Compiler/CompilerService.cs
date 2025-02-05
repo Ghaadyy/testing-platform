@@ -7,7 +7,8 @@ namespace RestrictedNL.Services.Compiler;
 public enum CompilerTarget
 {
     SELENIUM,
-    JSON
+    JSON,
+    DECOMPILE
 }
 
 public class CompilerService(
