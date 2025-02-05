@@ -1,31 +1,22 @@
+from pydantic import BaseModel
+
+class ImageDescription(BaseModel):
+    description: str
+
+class Element(BaseModel):
+    description: str
+
+class ImageElements(BaseModel):
+    image: str
+    elements: list[Element]
+
 DEEPSEEK = "deepseek-r1-distill-qwen-7b"
 LLAVA = "llava:7b"
 
 OUTPUT_SCHEMA = {
     "type": "json_schema",
     "json_schema": {
-        "schema": {
-            "type": "object",
-            "properties": {
-                "image": {"type": "string"},
-                "elements": {"type": "array", "items": {"$ref": "#/$defs/element"}},
-            },
-            "$defs": {
-                "element": {
-                    "type": "object",
-                    "properties": {
-                        "description": {
-                            "type": "string",
-                            "description": "The description of the UI element.",
-                        }
-                    },
-                    "required": ["description"],
-                    "additionalProperties": False,
-                }
-            },
-            "required": ["image", "elements"],
-            "additionalProperties": False,
-        }
+        "schema": ImageElements.model_json_schema()
     },
 }
 
@@ -40,19 +31,19 @@ For each element:
 """.strip()
 
 LLAVA_PROMPT = """
-        You are given a cropped image of a web UI element, describing an icon button. 
+You are given a cropped image of a web UI element, describing an icon button. 
 
-        ### Your task:
-        - For the icon button image, generate **one** brief, human-readable description.
-        - Keep the description **concise**.
-        - Focus only on **what the icon is**.
-        - Do **not** include extra details or explanations.
-        - The image is a cropped icon button from a web UI, so only describe the icon itself.
+### Your task:
+- For the icon button image, generate **one** brief, human-readable description.
+- Keep the description **concise**.
+- Focus only on **what the icon is**.
+- Do **not** include extra details or explanations.
+- The image is a cropped icon button from a web UI, so only describe the icon itself.
 
-        ### Example:
-        ```json
-        {
-            "description": "A small refresh icon"
-        }
-        ```
-        """.strip()
+### Example:
+```json
+{
+    "description": "A small refresh icon"
+}
+```
+""".strip()
