@@ -6,6 +6,7 @@ using RestrictedNL.Repository.Test;
 using RestrictedNL.Services.Token;
 using RestrictedNL.Models.Test;
 using RestrictedNL.Services.Compiler;
+using System.Net.Mime;
 
 namespace RestrictedNL.Controllers;
 
@@ -93,6 +94,18 @@ public class TestsController(
         var (json, errors) = await compilerService.Parse(file.Content, CompilerTarget.JSON);
 
         if (errors.Count == 0) return Ok(json);
+        else return BadRequest(errors);
+    }
+
+    [HttpPost("decompile")]
+    public async Task<IActionResult> Decompile([FromBody] string json)
+    {
+        var id = tokenService.GetId(User);
+        if (id is null) return Unauthorized();
+
+        var (source, errors) = await compilerService.Parse(json, CompilerTarget.DECOMPILE);
+
+        if (errors.Count == 0) return Ok(source);
         else return BadRequest(errors);
     }
 

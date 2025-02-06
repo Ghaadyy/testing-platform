@@ -4,39 +4,32 @@ import { Program, Test } from "@/models/Program";
 import { toast } from "@/shadcn/hooks/use-toast";
 import { useCallback, useContext } from "react";
 
-function generateCode(tests: Test[]): string {
-  let code = "";
-
-  tests.forEach(({ testName, actions }) => {
-    code += `${testName} {\n`;
-
-    actions.forEach((action) => {
-      switch (action.action) {
-        case "visit":
-          code += `   visit "${action.url}"\n`;
-          break;
-        case "click":
-          code += `   click ${action.elementType} with description "${action.description}"\n`;
-          break;
-        case "check":
-          code += `   check if ${action.elementType} with description "${
-            action.description
-          }" ${action.state ? "is displayed" : "is hidden"}\n`;
-          break;
-        case "type":
-          code += `   type "${action.content}" on ${action.elementType} with description "${action.description}"\n`;
-          break;
-      }
-    });
-
-    code += `}\n`;
-  });
-
-  return code;
-}
-
 export function useCompiler() {
   const { token } = useContext(UserContext);
+
+  const generateCode = useCallback(
+    async function (tests: Test[]): Promise<string> {
+      const res = await fetch(`${API_URL}/api/tests/decompile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(JSON.stringify({ tests })),
+        method: "POST",
+      });
+
+      if (!res.ok)
+        toast({
+          title: "Test contains errors!",
+          variant: "destructive",
+        });
+
+      const code: string = await res.text();
+
+      return code;
+    },
+    [token]
+  );
 
   const parseCode = useCallback(
     async function (fileId: string): Promise<Test[]> {

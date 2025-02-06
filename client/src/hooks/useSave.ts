@@ -14,7 +14,7 @@ export function useSave() {
   async function saveDocument(fileId: string) {
     let generatedCode: string = "";
     if (!isCode) {
-      generatedCode = generateCode(tests);
+      generatedCode = await generateCode(tests);
       setCode(generatedCode);
     }
 
