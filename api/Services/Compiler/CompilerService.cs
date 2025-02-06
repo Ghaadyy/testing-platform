@@ -23,13 +23,14 @@ public class CompilerService(
         var compInfo = new ProcessStartInfo
         {
             FileName = "rnlc",
-            // this should be moved to an env var when the compiler supports it
-            Arguments = $"--keep-xpath -t {target}",
             UseShellExecute = false,
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+
+        compInfo.Environment["RNL_KEEP_XPATH"] = "1";
+        compInfo.Environment["RNL_TARGET"] = target;
 
         using var compiler = Process.Start(compInfo);
         if (compiler is null) return ("", []);
