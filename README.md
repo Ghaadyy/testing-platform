@@ -27,7 +27,7 @@ We provide a `compose.yml` file in order to run containers for each service in t
 After installing Docker and Docker Compose, you can simply go ahead and run the following commands.
 
 ```bash
-git clone https://github.com/Ghaadyy/fyp.git && cd fyp/
+git clone https://github.com/Ghaadyy/testing-platform.git && cd testing-platform/
 cd api && dotnet tool install --global dotnet-ef
 dotnet ef migrations add InitialMigration && cd ..
 docker compose up # Start the services
@@ -44,7 +44,7 @@ Now, you should have all the services up and running.
 If you wish to setup the project manually, you could start by cloning the repository.
 
 ```bash
-git clone https://github.com/Ghaadyy/fyp.git && cd fyp/
+git clone https://github.com/Ghaadyy/testing-platform.git && cd testing-platform/
 ```
 
 #### Setting up the client
