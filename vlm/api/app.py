@@ -3,76 +3,87 @@ import ast
 import tempfile
 import os
 from functools import wraps
+import requests
+import platform
+import io
 
-import jwt
-from jwt import ExpiredSignatureError, InvalidTokenError
 from flask import Flask, request, jsonify
+from auth import authorize
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoProcessor
 from transformers.generation import GenerationConfig
-from PIL import Image
+from PIL import Image, ImageDraw
 
-SECRET_KEY = "averyveryverylongsecretthatshouldnotbeusedinproduction"
+def get_device():
+    if torch.cuda.is_available():
+        print("[DEVICE] CUDA is available. Using GPU.")
+        return torch.device("cuda")
+    elif platform.system() == "Darwin" and torch.backends.mps.is_available():
+        print("[DEVICE] MPS is available on macOS. Using MPS.")
+        return torch.device("mps")
+    else:
+        print("[DEVICE] No GPU available. Using CPU.")
+        return torch.device("cpu")
+
 app = Flask(__name__)
 
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code=True)
-model = AutoModelForCausalLM.from_pretrained("./SeeClick", device_map="cuda", trust_remote_code=True, bf16=True).eval()
-model.generation_config = GenerationConfig.from_pretrained("Qwen/Qwen-VL-Chat", trust_remote_code=True)
+device = get_device()
+torch_dtype = torch.float16
 
-def authorize(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({"msg": "Token is missing"}), 401
+BASE_MODEL = "microsoft/Florence-2-base" # "microsoft/Florence-2-large"
 
-        if token.startswith("Bearer "):
-            token = token[7:]
+model = AutoModelForCausalLM.from_pretrained(BASE_MODEL, torch_dtype=torch_dtype, trust_remote_code=True).to(device)
+processor = AutoProcessor.from_pretrained(BASE_MODEL, trust_remote_code=True)
 
-        try:
-            decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            request.decoded_token = decoded_token 
-            return f(*args, **kwargs)
-        except ExpiredSignatureError:
-            return jsonify({"msg": "Token has expired"}), 401
-        except InvalidTokenError:
-            return jsonify({"msg": "Invalid token"}), 401
+def run_model(image, task_prompt='<OPEN_VOCABULARY_DETECTION>', text_input=''):
+    prompt = task_prompt + text_input
 
-    return decorator
+    inputs = processor(text=prompt, images=image, return_tensors="pt").to(device, torch_dtype)
+
+    generated_ids = model.generate(
+        input_ids=inputs["input_ids"],
+        pixel_values=inputs["pixel_values"],
+        max_new_tokens=4096,
+        num_beams=3,
+        do_sample=False
+    )
+
+    generated_text = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
+    parsed_answer = processor.post_process_generation(
+        generated_text, 
+        task=task_prompt, 
+        image_size=(image.width, image.height)
+    )
+
+    return parsed_answer
+
+def draw_bbox(image, coordinates):
+    draw = ImageDraw.Draw(image)
+    for coord in coordinates:
+        draw.rectangle(coord, outline="red", width=3)
+    return image
 
 @app.post("/coordinates")
-@authorize
-def getCoordinates():
+# @authorize
+def get_coordinates():
     data = request.json
     description = data['description']
-    element_type = data['element_type']
-    image = base64.b64decode(data['image'])
+    # element_type = data['element_type']
 
-    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_img:
-        img_path = temp_img.name
-        temp_img.write(image)
+    decoded_image = base64.b64decode(data['image'])
+    image = Image.open(io.BytesIO(decoded_image)).convert('RGB')
     
-    try:
-        prompt = "In this UI screenshot, what is the position of the {} corresponding to the description \"{}\" (with point)?"
+    results = run_model(image, text_input=description)
 
-        query = tokenizer.from_list_format([
-            {'image': img_path},
-            {'text': prompt.format(element_type, description)},
-        ])
+    boxes = results[task]['bboxes']
+    image_boxes = draw_bbox(image, boxes)
 
-        response, _ = model.chat(tokenizer, query=query, history=None)
-        x, y = ast.literal_eval(response)
+    img_bytes = io.BytesIO()
+    image_boxes.save(img_bytes, format="PNG")
+    img_bytes.seek(0)
 
-        with Image.open(img_path) as img:
-            width, height = img.size
-
-        point = (round(width*x), round(height*y))
-        return jsonify(point)
+    return jsonify({"image": base64.b64encode(img_bytes.getvalue()).decode('utf-8')})
         
-    finally:
-        if os.path.exists(img_path):
-            os.remove(img_path)
-
 if __name__ == '__main__':
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=5001)
