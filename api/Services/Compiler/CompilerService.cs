@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Microsoft.OpenApi.Extensions;
 
-namespace RestrictedNL.Services.Compiler;
+namespace TestingPlatform.Services.Compiler;
 
 public enum CompilerTarget
 {

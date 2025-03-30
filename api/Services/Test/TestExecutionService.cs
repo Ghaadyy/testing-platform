@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using RestrictedNL.Models.Logs;
-using RestrictedNL.Models.Test;
-using RestrictedNL.Services.Http;
-using RestrictedNL.Services.Redis;
-using RestrictedNL.Services.Compiler;
+using TestingPlatform.Models.Logs;
+using TestingPlatform.Models.Test;
+using TestingPlatform.Services.Http;
+using TestingPlatform.Services.Redis;
+using TestingPlatform.Services.Compiler;
 
-namespace RestrictedNL.Services.Test;
+namespace TestingPlatform.Services.Test;
 
 public class TestExecutionService(
     HttpService httpService,

@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using RestrictedNL.Models.Logs;
+using TestingPlatform.Models.Logs;
 
-namespace RestrictedNL.Services.Http;
+namespace TestingPlatform.Services.Http;
 
 public class HttpService
 {

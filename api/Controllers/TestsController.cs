@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestrictedNL.Services.Redis;
-using RestrictedNL.Services.Test;
-using RestrictedNL.Repository.Test;
-using RestrictedNL.Services.Token;
-using RestrictedNL.Models.Test;
-using RestrictedNL.Services.Compiler;
+using TestingPlatform.Services.Redis;
+using TestingPlatform.Services.Test;
+using TestingPlatform.Repository.Test;
+using TestingPlatform.Services.Token;
+using TestingPlatform.Models.Test;
+using TestingPlatform.Services.Compiler;
 using System.Net.Mime;
 
-namespace RestrictedNL.Controllers;
+namespace TestingPlatform.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

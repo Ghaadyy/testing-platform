@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RestrictedNL.Models.User;
+namespace TestingPlatform.Models.User;
 
 public class LoginModel
 {

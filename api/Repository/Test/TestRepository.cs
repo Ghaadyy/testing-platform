@@ -1,8 +1,8 @@
-namespace RestrictedNL.Repository.Test;
+namespace TestingPlatform.Repository.Test;
 
-using RestrictedNL.Context;
-using RestrictedNL.Models.Logs;
-using RestrictedNL.Models.Test;
+using TestingPlatform.Context;
+using TestingPlatform.Models.Logs;
+using TestingPlatform.Models.Test;
 
 public class TestRepository(TestContext context) : ITestRepository
 {

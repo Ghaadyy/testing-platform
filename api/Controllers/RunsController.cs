@@ -2,15 +2,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using RestrictedNL.Models.Logs;
-using RestrictedNL.Models.Test;
-using RestrictedNL.Repository.Test;
-using RestrictedNL.Services.Http;
-using RestrictedNL.Services.Redis;
-using RestrictedNL.Services.Test;
-using RestrictedNL.Services.Token;
+using TestingPlatform.Models.Logs;
+using TestingPlatform.Models.Test;
+using TestingPlatform.Repository.Test;
+using TestingPlatform.Services.Http;
+using TestingPlatform.Services.Redis;
+using TestingPlatform.Services.Test;
+using TestingPlatform.Services.Token;
 
-namespace RestrictedNL.Controllers;
+namespace TestingPlatform.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

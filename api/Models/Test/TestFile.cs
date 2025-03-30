@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestrictedNL.Models.Test;
+namespace TestingPlatform.Models.Test;
 
 public record TestFileDTO
 {

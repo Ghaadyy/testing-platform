@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
-using RestrictedNL.Models.Logs;
+using TestingPlatform.Models.Logs;
 
-namespace RestrictedNL.Services.Redis;
+namespace TestingPlatform.Services.Redis;
 
 public class RedisProcessService(IDistributedCache cache)
 {

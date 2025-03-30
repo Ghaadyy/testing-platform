@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
-using RestrictedNL.Models.User;
+using TestingPlatform.Models.User;
 
-namespace RestrictedNL.Services.Token;
+namespace TestingPlatform.Services.Token;
 
 public interface ITokenService
 {

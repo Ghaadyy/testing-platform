@@ -1,12 +1,12 @@
-using RestrictedNL.Models.Logs;
+using TestingPlatform.Models.Logs;
 using System.Net.WebSockets;
 using System.Text;
 using Newtonsoft.Json;
-using RestrictedNL.Services.Redis;
+using TestingPlatform.Services.Redis;
 using Newtonsoft.Json.Linq;
-using RestrictedNL.Services.Http;
+using TestingPlatform.Services.Http;
 
-namespace RestrictedNL.Middlewares;
+namespace TestingPlatform.Middlewares;
 
 public class WebSocketMiddleware(RequestDelegate next)
 {

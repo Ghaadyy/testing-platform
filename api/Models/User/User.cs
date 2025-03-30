@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestrictedNL.Models.User;
+namespace TestingPlatform.Models.User;
 
 [Table("users")]
 public class User

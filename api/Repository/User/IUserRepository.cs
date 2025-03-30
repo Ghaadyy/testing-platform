@@ -1,7 +1,7 @@
-﻿namespace RestrictedNL.Repository.User;
+﻿namespace TestingPlatform.Repository.User;
 
 using Microsoft.AspNetCore.JsonPatch;
-using RestrictedNL.Models.User;
+using TestingPlatform.Models.User;
 
 public interface IUserRepository
 {

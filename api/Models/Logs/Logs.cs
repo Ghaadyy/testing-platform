@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestrictedNL.Models.Logs;
+namespace TestingPlatform.Models.Logs;
 
 public record LogKey(Guid UserId, Guid RunId)
 {

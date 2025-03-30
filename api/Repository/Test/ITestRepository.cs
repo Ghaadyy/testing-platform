@@ -1,7 +1,7 @@
-namespace RestrictedNL.Repository.Test;
+namespace TestingPlatform.Repository.Test;
 
-using RestrictedNL.Models.Logs;
-using RestrictedNL.Models.Test;
+using TestingPlatform.Models.Logs;
+using TestingPlatform.Models.Test;
 
 public interface ITestRepository
 {

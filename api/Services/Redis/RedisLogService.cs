@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
-using RestrictedNL.Context;
-using RestrictedNL.Models.Logs;
+using TestingPlatform.Context;
+using TestingPlatform.Models.Logs;
 
-namespace RestrictedNL.Services.Redis;
+namespace TestingPlatform.Services.Redis;
 
 // The Redis cache contains data in the following format
 // LogKey => List<LogGroup>

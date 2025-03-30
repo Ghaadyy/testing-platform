@@ -2,9 +2,9 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using RestrictedNL.Models.User;
+using TestingPlatform.Models.User;
 
-namespace RestrictedNL.Services.Token;
+namespace TestingPlatform.Services.Token;
 
 public class TokenService(IConfiguration configuration) : ITokenService
 {

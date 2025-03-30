@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
-using RestrictedNL.Models.Token;
-using RestrictedNL.Models.User;
-using RestrictedNL.Services.Token;
-using RestrictedNL.Repository.User;
+using TestingPlatform.Models.Token;
+using TestingPlatform.Models.User;
+using TestingPlatform.Services.Token;
+using TestingPlatform.Repository.User;
 
-namespace RestrictedNL.Controllers;
+namespace TestingPlatform.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

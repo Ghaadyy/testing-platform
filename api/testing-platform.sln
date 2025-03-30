@@ -2,7 +2,7 @@
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fyp-backend", "fyp-backend.csproj", "{3C2B5D0C-D413-4C1E-80D2-6A97D0DC76B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "testing-platform", "testing-platform.csproj", "{3C2B5D0C-D413-4C1E-80D2-6A97D0DC76B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

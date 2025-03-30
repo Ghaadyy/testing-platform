@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using RestrictedNL.Models.Logs;
-using RestrictedNL.Models.Test;
-using RestrictedNL.Models.User;
+using TestingPlatform.Models.Logs;
+using TestingPlatform.Models.Test;
+using TestingPlatform.Models.User;
 
-namespace RestrictedNL.Context;
+namespace TestingPlatform.Context;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 public class TestContext(DbContextOptions options) : DbContext(options)

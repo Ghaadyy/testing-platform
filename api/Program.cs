@@ -2,15 +2,15 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using RestrictedNL.Context;
-using RestrictedNL.Middlewares;
-using RestrictedNL.Services.Redis;
-using RestrictedNL.Repository.Test;
-using RestrictedNL.Services.Token;
-using RestrictedNL.Repository.User;
-using RestrictedNL.Services.Http;
-using RestrictedNL.Services.Test;
-using RestrictedNL.Services.Compiler;
+using TestingPlatform.Context;
+using TestingPlatform.Middlewares;
+using TestingPlatform.Services.Redis;
+using TestingPlatform.Repository.Test;
+using TestingPlatform.Services.Token;
+using TestingPlatform.Repository.User;
+using TestingPlatform.Services.Http;
+using TestingPlatform.Services.Test;
+using TestingPlatform.Services.Compiler;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
-using RestrictedNL.Models.Test;
-using RestrictedNL.Repository.Test;
+using TestingPlatform.Models.Test;
+using TestingPlatform.Repository.Test;
 
-namespace RestrictedNL.Services.Redis;
+namespace TestingPlatform.Services.Redis;
 
 // The Redis cache contains data in the following format
 // userId => List<TestRun>

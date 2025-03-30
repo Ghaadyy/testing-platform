@@ -1,5 +1,5 @@
-namespace RestrictedNL.Models.Token;
+namespace TestingPlatform.Models.Token;
 
-using RestrictedNL.Models.User;
+using TestingPlatform.Models.User;
 
 public record TokenReponse(string Token, User User);
