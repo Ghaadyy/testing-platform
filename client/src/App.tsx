@@ -10,6 +10,7 @@ import RunsScreen from "./screens/RunsScreen";
 import ViewRunScreen from "./screens/ViewRunScreen";
 import { useAuth } from "./hooks/useAuth";
 import { Toaster } from "./shadcn/components/ui/toaster";
+import DemoModel from "./screens/DemoModel";
 
 function App() {
   const { authInitialized } = useContext(UserContext);
@@ -24,6 +25,7 @@ function App() {
       children: [
         { path: "", element: authorize(<HomeScreen />) },
         { path: "tests/:testId/runs", element: authorize(<RunsScreen />) },
+        { path: "demo", element: authorize(<DemoModel />) },
       ],
     },
     {

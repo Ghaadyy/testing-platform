@@ -8,6 +8,7 @@ import platform
 import io
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from auth import authorize
 
 import torch
@@ -27,6 +28,7 @@ def get_device():
         return torch.device("cpu")
 
 app = Flask(__name__)
+CORS(app)
 
 device = get_device()
 torch_dtype = torch.float16
@@ -35,8 +37,9 @@ BASE_MODEL = "microsoft/Florence-2-base" # "microsoft/Florence-2-large"
 
 model = AutoModelForCausalLM.from_pretrained(BASE_MODEL, torch_dtype=torch_dtype, trust_remote_code=True).to(device)
 processor = AutoProcessor.from_pretrained(BASE_MODEL, trust_remote_code=True)
+task = '<OPEN_VOCABULARY_DETECTION>'
 
-def run_model(image, task_prompt='<OPEN_VOCABULARY_DETECTION>', text_input=''):
+def run_model(image, task_prompt=task, text_input=''):
     prompt = task_prompt + text_input
 
     inputs = processor(text=prompt, images=image, return_tensors="pt").to(device, torch_dtype)

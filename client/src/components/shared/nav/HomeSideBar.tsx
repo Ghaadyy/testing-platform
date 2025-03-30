@@ -1,4 +1,4 @@
-import { FilePlusIcon, Moon, Sun } from "lucide-react";
+import { Bot, FilePlusIcon, Moon, Sun } from "lucide-react";
 import { Button } from "@/shadcn/components/ui/button";
 import {
   Sidebar,
@@ -48,6 +48,15 @@ function HomeSideBar({ children }: HomeSideBarProps) {
                       <FilePlusIcon /> Create test
                     </SidebarMenuButton>
                   </CreateFileDialog>
+                </SidebarMenuItem>
+              </SidebarMenu>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Link to="/demo">
+                    <SidebarMenuButton>
+                      <Bot /> Try the Demo
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
