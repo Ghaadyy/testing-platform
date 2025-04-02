@@ -1,6 +1,6 @@
 services:
   client:
-    image: ghaadyy/testing-platform:latest
+    image: ghaadyy/testing-platform-client:latest
     depends_on:
       - api
     environment:
@@ -10,7 +10,7 @@ services:
       - "80:80"
 
   api:
-    image: ghaadyy/testing-platform:latest
+    image: ghaadyy/testing-platform-api:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
