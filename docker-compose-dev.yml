@@ -1,0 +1,51 @@
+services:
+  client:
+    build: ./client
+    depends_on:
+      - api
+    environment:
+      VITE_API_URL: http://localhost:5064
+      NODE_ENV: production
+    ports:
+      - "80:80"
+
+  api:
+    build: ./api
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "5064:5064"
+    environment:
+      ConnectionStrings__DB: "Host=db;Port=5432;Database=restrictednl-db;Username=postgres;Password=postgres;"
+      ConnectionStrings__Redis: "redis:6379"
+      ASPNETCORE_ENVIRONMENT: Production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.2.7
+
+  selenium:
+    image: selenium/standalone-chrome:4.9.0
+    # there is no support for arm64 chrome images
+    # force users to download the x86_64 image and emulate it
+    platform: linux/amd64
+    shm_size: 2gb
+    ports:
+      - "7900:7900"
+      - "4444:4444"
+
+  db:
+    image: postgres:17.0
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: restrictednl-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d restrictednl-db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
