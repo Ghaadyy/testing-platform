@@ -1,14 +1,23 @@
-FROM node:22.11.0
+FROM node:22.11.0 AS builder
 
 WORKDIR /app
 
-COPY package.json /app/package.json
-COPY package-lock.json /app/package-lock.json
-
+COPY package.json package-lock.json ./
 RUN npm install
 
 COPY . .
 
-EXPOSE 5173
+RUN npm run build
 
-CMD npm run dev
+FROM nginx:stable-alpine
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+COPY ./scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+COPY ./conf/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
