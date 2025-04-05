@@ -33,15 +33,6 @@ docker compose up
 
 Now, you should have all the services up and running.
 
-## Contributing
-
-Contributions are welcome. To set up your development environment, you should run the following commands:
-
-```bash
-git clone https://github.com/Ghaadyy/testing-platform.git && cd testing-platform/
-docker compose -f docker-compose-dev.yml up
-```
-
 ### Manual Installation
 
 > [!WARNING]
@@ -96,4 +87,13 @@ Finally, you can go ahead and run the following command.
 
 ```bash
 dotnet run
+```
+
+## Contributing
+
+Contributions are welcome. To set up your development environment, you should run the following commands:
+
+```bash
+git clone https://github.com/Ghaadyy/testing-platform.git && cd testing-platform/
+docker compose -f docker-compose-dev.yml up
 ```
